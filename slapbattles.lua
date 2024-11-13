@@ -53,41 +53,42 @@ OrionLib:MakeNotification({
     Time = 7
 })
 
-mainTab:AddToggle({
-    Name = "Replica Auto Farm",
+local ReplicaFarm = false
+
+local function SpamReplica()
+    while ReplicaFarm do
+        game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
+        wait(20)
+    end
+end
+
+local FarmReplica = mainTab:AddToggle({
+    Name = "AutoSlapReplica",
     Default = false,
     Callback = function(Value)
         ReplicaFarm = Value
-        
-        if Value then
-            if player.leaderstats.Glove.Value ~= "Replica" then
-                OrionLib:MakeNotification({
-                    Name = "Error",
-                    Content = "You need Replica equipped!",
-                    Image = "rbxassetid://7733658504",
-                    Time = 5
-                })
-                return
+        if game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
+            if ReplicaFarm == true then
+                coroutine.wrap(SpamReplica)()
             end
             
-            task.spawn(function()
-                while ReplicaFarm do
-                    if player.Character and player.Character:FindFirstChild("entered") then
-                        ReplicatedStorage.Duplicate:FireServer(true)
-                        task.wait(0.1)
-                        
-                        while player.Character and player.Character.Parent == workspace do
-                            for _, v in pairs(workspace:GetChildren()) do
-                                if v.Name:match(player.Name) and v:FindFirstChild("Head") then
-                                    ReplicatedStorage.b:FireServer(v.Head, true)
-                                end
-                            end
-                            task.wait(0.1)
-                        end
+            while ReplicaFarm and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true do
+                for i,v in pairs(workspace:GetChildren()) do
+                    if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
+                        game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
                     end
-                    task.wait()
                 end
-            end)
+                task.wait()
+            end
+        elseif ReplicaFarm == true then
+            OrionLib:MakeNotification({
+                Name = "Error",
+                Content = "You don't have Replica equipped or you aren't in the island default",
+                Image = "rbxassetid:7733658504",
+                Time = 5
+            })
+            wait(0.05)
+            FarmReplica:Set(false)
         end
     end
 })
