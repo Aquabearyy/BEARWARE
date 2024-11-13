@@ -46,6 +46,13 @@ local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, 
 
 local ReplicaFarm = false
 
+OrionLib:MakeNotification({
+    Name = "Farm Information",
+    Content = "Enter Default Arena to start farming!",
+    Image = "rbxassetid://7733658504",
+    Time = 7
+})
+
 mainTab:AddToggle({
     Name = "Replica Auto Farm",
     Default = false,
@@ -65,44 +72,24 @@ mainTab:AddToggle({
             
             task.spawn(function()
                 while ReplicaFarm do
-                    if not player.Character:FindFirstChild("entered") then
-                        repeat task.wait()
-                            firetouchinterest(player.Character:WaitForChild("Head"), 
-                                workspace.Lobby["Teleport2"].TouchInterest.Parent, 0)
-                            firetouchinterest(player.Character:WaitForChild("Head"), 
-                                workspace.Lobby["Teleport2"].TouchInterest.Parent, 1)
-                        until player.Character:FindFirstChild("entered")
-                    end
-                    
-                    if player.Character:FindFirstChild("entered") then
+                    if player.Character and player.Character:FindFirstChild("entered") then
                         ReplicatedStorage.Duplicate:FireServer(true)
                         task.wait(0.1)
                         
-                        for _ = 1, 20 do
+                        while player.Character and player.Character.Parent == workspace do
                             for _, v in pairs(workspace:GetChildren()) do
-                                if v.Name:match(player.Name) and v:FindFirstChild("HumanoidRootPart") then
-                                    ReplicatedStorage.b:FireServer(v:WaitForChild("Head"), true)
+                                if v.Name:match(player.Name) and v:FindFirstChild("Head") then
+                                    ReplicatedStorage.b:FireServer(v.Head, true)
                                 end
                             end
                             task.wait(0.1)
                         end
-                        
-                        ReplicatedStorage:WaitForChild("HumanoidDied"):FireServer(player.Character, false)
-                        task.wait(3.75)
                     end
-                    
                     task.wait()
                 end
             end)
         end
     end
-})
-
-OrionLib:MakeNotification({
-    Name = "Farm Information",
-    Content = "Replica Farm: Requires Replica glove, auto enters arena, rapid slaps",
-    Image = "rbxassetid://7733658504",
-    Time = 7
 })
 
 local Animations = {
