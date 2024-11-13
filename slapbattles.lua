@@ -56,7 +56,7 @@ mainTab:AddToggle({
                 game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
                 game:GetService("ReplicatedStorage").b:FireServer(plr.Character:WaitForChild("HumanoidRootPart"), true)
             end
-            task.wait()
+            wait(20)
         end
     end
 })
