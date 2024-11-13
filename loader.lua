@@ -25,7 +25,7 @@ local function loadScript()
         if gameId == 6403373529 then -- Slap Battles
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/slapbattles.lua"))()
         elseif gameId == 17625359962 then -- Rivals
-            loadstring(game:HttpGet("soon"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/rivals.lua"))()
         end
     end)
     
