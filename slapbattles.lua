@@ -58,8 +58,13 @@ mainTab:AddToggle({
                 game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
                 task.wait(0.5)
                 
-                game:GetService("ReplicatedStorage").b:FireServer(plr.Character:WaitForChild("HumanoidRootPart"), true)
-
+                for _, v in pairs(workspace:GetChildren()) do
+                    if v.Name == "Replica" and v:FindFirstChild("HumanoidRootPart") then
+                        game:GetService("ReplicatedStorage").b:FireServer(v.HumanoidRootPart)
+                        break
+                    end
+                end
+                
                 task.wait(20)
             else
                 task.wait(1)
