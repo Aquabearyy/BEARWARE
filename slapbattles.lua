@@ -36,7 +36,86 @@ local badgesTab = Window:MakeTab({
     PremiumOnly = false
 })
 
+local combatTab = Window:MakeTab({
+    Name = "Combat",
+    Icon = "rbxassetid://124159074947754",
+    PremiumOnly = false
+})
+
 local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, -0.0, 0.9, -0.0, -0.1)
+
+local Animations = {
+    Floss = nil,
+    Groove = nil,
+    Headless = nil,
+    Helicopter = nil,
+    Kick = nil,
+    L = nil,
+    Laugh = nil,
+    Parker = nil,
+    Spasm = nil,
+    Thriller = nil
+}
+
+local currentlyPlaying = nil
+
+local function StopCurrentAnimation()
+    if currentlyPlaying then
+        currentlyPlaying:Stop()
+        currentlyPlaying = nil
+    end
+end
+
+mainTab:AddToggle({
+    Name = "Free Animations",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            Animations.Floss = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Floss)
+            Animations.Groove = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Groove)
+            Animations.Headless = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Headless)
+            Animations.Helicopter = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Helicopter)
+            Animations.Kick = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Kick)
+            Animations.L = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.L)
+            Animations.Laugh = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Laugh)
+            Animations.Parker = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Parker)
+            Animations.Spasm = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Spasm)
+            Animations.Thriller = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Thriller)
+
+            game.Players.LocalPlayer.Chatted:connect(function(msg)
+                if game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local commands = {
+                        ["/e floss"] = Animations.Floss,
+                        ["/e groove"] = Animations.Groove,
+                        ["/e headless"] = Animations.Headless,
+                        ["/e helicopter"] = Animations.Helicopter,
+                        ["/e kick"] = Animations.Kick,
+                        ["/e l"] = Animations.L,
+                        ["/e laugh"] = Animations.Laugh,
+                        ["/e parker"] = Animations.Parker,
+                        ["/e spasm"] = Animations.Spasm,
+                        ["/e thriller"] = Animations.Thriller
+                    }
+                    
+                    local animation = commands[string.lower(msg)]
+                    if animation then
+                        StopCurrentAnimation()
+                        animation:Play()
+                        currentlyPlaying = animation
+                    end
+                end
+            end)
+        else
+            StopCurrentAnimation()
+            for _, animation in pairs(Animations) do
+                if animation then
+                    animation:Stop()
+                end
+            end
+            Animations = {}
+        end
+    end    
+})
 
 antiTab:AddToggle({
     Name = "Anti-Void",
@@ -61,6 +140,104 @@ antiTab:AddToggle({
     end    
 })
 
+antiTab:AddToggle({
+    Name = "Anti Ragdoll",
+    Default = false,
+    Callback = function(Value)
+        _G.AntiRagdoll = Value
+        while _G.AntiRagdoll and task.wait() do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                if workspace[player.Name]:FindFirstChild("Ragdolled") and workspace[player.Name].Ragdolled.Value == true then
+                    player.Character.HumanoidRootPart.Anchored = true
+                else
+                    player.Character.HumanoidRootPart.Anchored = false
+                end
+            end
+        end
+    end    
+})
+
+local slapEnabled = false
+local slapDistance = 30
+local slapCooldown = 0.6
+local lastSlapTime = 0
+
+combatTab:AddToggle({
+    Name = "Slap Aura",
+    Default = false,
+    Callback = function(Value)
+        slapEnabled = Value
+        while slapEnabled and task.wait() do
+            if tick() - lastSlapTime < slapCooldown then continue end
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then continue end
+            
+            local playerPosition = player.Character.HumanoidRootPart.Position
+            local closestPlayer = nil
+            local closestDistance = slapDistance
+            
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
+                if otherPlayer ~= player and 
+                   otherPlayer.Character and 
+                   otherPlayer.Character:FindFirstChild("HumanoidRootPart") and
+                   otherPlayer.Character:FindFirstChild("Head") then
+                    local distance = (playerPosition - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if distance <= closestDistance then
+                        closestDistance = distance
+                        closestPlayer = otherPlayer
+                    end
+                end
+            end
+            
+            if closestPlayer then
+                local currentGlove = player.leaderstats.Glove.Value
+                local remotes = {
+                    ["Default"] = "b", ["Extended"] = "b", ["Dual"] = "GeneralHit", ["Diamond"] = "DiamondHit",
+                    ["ZZZZZZZ"] = "ZZZZZZZHit", ["Brick"] = "BrickHit", ["Snow"] = "SnowHit", ["Pull"] = "PullHit",
+                    ["Flash"] = "FlashHit", ["Spring"] = "springhit", ["Swapper"] = "HitSwapper", ["Bull"] = "BullHit",
+                    ["Dice"] = "DiceHit", ["Ghost"] = "GhostHit", ["Thanos"] = "ThanosHit", ["Stun"] = "HtStun",
+                    ["Za Hando"] = "zhrmat", ["Fort"] = "Fort", ["Magnet"] = "MagnetHIT", ["Pusher"] = "PusherHit",
+                    ["Anchor"] = "hitAnchor", ["Space"] = "HtSpace", ["Boomerang"] = "BoomerangH",
+                    ["Speedrun"] = "Speedrunhit", ["Mail"] = "MailHit", ["Golden"] = "GoldenHit",
+                    ["THICK"] = "GeneralHit", ["Squid"] = "GeneralHit", ["Tycoon"] = "GeneralHit",
+                    ["Flex"] = "FlexHit", ["CULT"] = "CULTHit", ["Orbit"] = "Orbihit",
+                    ["Frostbite"] = "GeneralHit", ["Avatar"] = "GeneralHit"
+                }
+                local remote = remotes[currentGlove] or "GeneralHit"
+                local remoteEvent = ReplicatedStorage:FindFirstChild(remote)
+                if remoteEvent then
+                    lastSlapTime = tick()
+                    remoteEvent:FireServer(closestPlayer.Character.Head)
+                end
+            end
+        end
+    end    
+})
+
+combatTab:AddSlider({
+    Name = "Slap Aura Range",
+    Min = 10,
+    Max = 60,
+    Default = 30,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "studs",
+    Callback = function(Value)
+        slapDistance = Value
+    end    
+})
+
+combatTab:AddSlider({
+    Name = "Slap Aura Cooldown",
+    Min = 0.1,
+    Max = 2,
+    Default = 0.6,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 0.1,
+    ValueName = "seconds",
+    Callback = function(Value)
+        slapCooldown = Value
+    end    
+})
 badgesTab:AddButton({
     Name = "Get Lamp Glove",
     Default = false,
@@ -126,77 +303,6 @@ badgesTab:AddButton({
             Time = 5
         })
     end
-})
-
-antiTab:AddToggle({
-    Name = "Anti Ragdoll",
-    Default = false,
-    Callback = function(Value)
-        _G.AntiRagdoll = Value
-        while _G.AntiRagdoll and task.wait() do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                if workspace[player.Name]:FindFirstChild("Ragdolled") and workspace[player.Name].Ragdolled.Value == true then
-                    player.Character.HumanoidRootPart.Anchored = true
-                else
-                    player.Character.HumanoidRootPart.Anchored = false
-                end
-            end
-        end
-    end    
-})
-
-mainTab:AddButton({
-    Name = "Free All Animations",
-    Callback = function()
-        Floss = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Floss, game.Players.LocalPlayer.Character.Humanoid)
-        Groove = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Groove, game.Players.LocalPlayer.Character.Humanoid)
-        Headless = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Headless, game.Players.LocalPlayer.Character.Humanoid)
-        Helicopter = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Helicopter, game.Players.LocalPlayer.Character.Humanoid)
-        Kick = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Kick, game.Players.LocalPlayer.Character.Humanoid)
-        L = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.L, game.Players.LocalPlayer.Character.Humanoid)
-        Laugh = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Laugh, game.Players.LocalPlayer.Character.Humanoid)
-        Parker = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Parker, game.Players.LocalPlayer.Character.Humanoid)
-        Spasm = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Spasm, game.Players.LocalPlayer.Character.Humanoid)
-        Thriller = game.Players.LocalPlayer.Character.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Thriller, game.Players.LocalPlayer.Character.Humanoid)
-        
-        game.Players.LocalPlayer.Chatted:connect(function(msg)
-            if game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                if string.lower(msg) == "/e floss" then Floss:Play()
-                elseif string.lower(msg) == "/e groove" then Groove:Play()
-                elseif string.lower(msg) == "/e headless" then Headless:Play()
-                elseif string.lower(msg) == "/e helicopter" then Helicopter:Play()
-                elseif string.lower(msg) == "/e kick" then Kick:Play()
-                elseif string.lower(msg) == "/e l" then L:Play()
-                elseif string.lower(msg) == "/e laugh" then Laugh:Play()
-                elseif string.lower(msg) == "/e parker" then Parker:Play()
-                elseif string.lower(msg) == "/e spasm" then Spasm:Play()
-                elseif string.lower(msg) == "/e thriller" then Thriller:Play()
-                end
-            end
-        end)
-        
-        game:GetService("RunService").Heartbeat:Connect(function()
-            local EP = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-            if EP and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and 
-               (Floss.IsPlaying or Groove.IsPlaying or Headless.IsPlaying or Helicopter.IsPlaying or 
-                Kick.IsPlaying or L.IsPlaying or Laugh.IsPlaying or Parker.IsPlaying or 
-                Spasm.IsPlaying or Thriller.IsPlaying) then
-                local Magnitude = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - EP).Magnitude
-                if Magnitude > 1 then
-                    Floss:Stop()
-                    Groove:Stop()
-                    Headless:Stop()
-                    Helicopter:Stop()
-                    Kick:Stop()
-                    L:Stop()
-                    Laugh:Stop()
-                    Parker:Stop()
-                    Spasm:Stop()
-                    Thriller:Stop()
-                end
-            end
-        end)
-    end    
 })
 
 mainTab:AddButton({
@@ -319,5 +425,20 @@ localTab:AddButton({
         tool.Parent = game.Players.LocalPlayer.Backpack
     end    
 })
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+    if _G.AnimationsEnabled then
+        Animations.Floss = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Floss)
+        Animations.Groove = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Groove)
+        Animations.Headless = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Headless)
+        Animations.Helicopter = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Helicopter)
+        Animations.Kick = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Kick)
+        Animations.L = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.L)
+        Animations.Laugh = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Laugh)
+        Animations.Parker = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Parker)
+        Animations.Spasm = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Spasm)
+        Animations.Thriller = char.Humanoid:LoadAnimation(game.ReplicatedStorage.AnimationPack.Thriller)
+    end
+end)
 
 OrionLib:Init()
