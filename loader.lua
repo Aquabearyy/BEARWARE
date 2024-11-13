@@ -15,11 +15,6 @@ if not gameName then
     return
 end
 
-local scriptUrls = {
-    ["Main Slap Battles"] = "https://your-main-slap-battles-script-url.com",
-    ["Rivals"] = "https://your-rivals-script-url.com"
-}
-
 local function loadScript()
     local success, result = pcall(function()
         if gameId == 6403373529 then -- Slap Battles
