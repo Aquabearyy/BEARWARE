@@ -52,28 +52,58 @@ mainTab:AddToggle({
     Callback = function(Value)
         ReplicaFarm = Value
         
-        while ReplicaFarm do
-            local plr = game:GetService("Players").LocalPlayer
-            if plr.leaderstats.Glove.Value == "Replica" and plr.Character:FindFirstChild("IsInDefaultArena") and plr.Character:FindFirstChild("IsInDefaultArena").Value == true then
-                game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
-                task.wait(0.5)
-                
-                for _, v in pairs(workspace:GetChildren()) do
-                    if v.Name == "Replica" and v:FindFirstChild("HumanoidRootPart") then
-                        game:GetService("ReplicatedStorage").b:FireServer(v.HumanoidRootPart)
-                        break
-                    end
-                end
-                
-                task.wait(20)
-            else
-                task.wait(1)
+        if Value then
+            if player.leaderstats.Glove.Value ~= "Replica" then
+                OrionLib:MakeNotification({
+                    Name = "Error",
+                    Content = "You need Replica equipped!",
+                    Image = "rbxassetid://7733658504",
+                    Time = 5
+                })
+                return
             end
+            
+            task.spawn(function()
+                while ReplicaFarm do
+                    if not player.Character:FindFirstChild("entered") then
+                        repeat task.wait()
+                            firetouchinterest(player.Character:WaitForChild("Head"), 
+                                workspace.Lobby["Teleport2"].TouchInterest.Parent, 0)
+                            firetouchinterest(player.Character:WaitForChild("Head"), 
+                                workspace.Lobby["Teleport2"].TouchInterest.Parent, 1)
+                        until player.Character:FindFirstChild("entered")
+                    end
+                    
+                    if player.Character:FindFirstChild("entered") then
+                        ReplicatedStorage.Duplicate:FireServer(true)
+                        task.wait(0.1)
+                        
+                        for _ = 1, 20 do
+                            for _, v in pairs(workspace:GetChildren()) do
+                                if v.Name:match(player.Name) and v:FindFirstChild("HumanoidRootPart") then
+                                    ReplicatedStorage.b:FireServer(v:WaitForChild("Head"), true)
+                                end
+                            end
+                            task.wait(0.1)
+                        end
+                        
+                        ReplicatedStorage:WaitForChild("HumanoidDied"):FireServer(player.Character, false)
+                        task.wait(3.75)
+                    end
+                    
+                    task.wait()
+                end
+            end)
         end
     end
 })
 
-mainTab:AddParagraph("Replica Farm Requirements", "Must have Replica glove equipped and be in default arena")
+OrionLib:MakeNotification({
+    Name = "Farm Information",
+    Content = "Replica Farm: Requires Replica glove, auto enters arena, rapid slaps",
+    Image = "rbxassetid://7733658504",
+    Time = 7
+})
 
 local Animations = {
     Floss = nil,
