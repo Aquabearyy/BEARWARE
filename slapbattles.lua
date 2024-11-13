@@ -45,23 +45,30 @@ local combatTab = Window:MakeTab({
 local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, -0.0, 0.9, -0.0, -0.1)
 
 local ReplicaFarm = false
+
 mainTab:AddToggle({
-    Name = "Replica Default Arena Farm",
+    Name = "Replica Auto Farm",
     Default = false,
     Callback = function(Value)
         ReplicaFarm = Value
+        
         while ReplicaFarm do
             local plr = game:GetService("Players").LocalPlayer
             if plr.leaderstats.Glove.Value == "Replica" and plr.Character:FindFirstChild("IsInDefaultArena") and plr.Character:FindFirstChild("IsInDefaultArena").Value == true then
                 game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
+                task.wait(0.5)
+                
                 game:GetService("ReplicatedStorage").b:FireServer(plr.Character:WaitForChild("HumanoidRootPart"), true)
+
+                task.wait(20)
+            else
+                task.wait(1)
             end
-            wait(20)
         end
     end
 })
 
-mainTab:AddParagraph("Requirements", "Must have Replica glove equipped and be in default arena")
+mainTab:AddParagraph("Replica Farm Requirements", "Must have Replica glove equipped and be in default arena")
 
 local Animations = {
     Floss = nil,
