@@ -42,6 +42,15 @@ local combatTab = Window:MakeTab({
     PremiumOnly = false
 })
 
+local ReplicaFarm = false
+
+local function SpamReplica()
+    while ReplicaFarm do
+        game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
+        wait(20)
+    end
+end
+
 local FarmReplica = mainTab:AddToggle({
     Name = "Auto Slap Replica",
     Default = false,
@@ -183,6 +192,8 @@ player.CharacterAdded:Connect(function(char)
         LoadAnimations(humanoid)
     end
 end)
+
+local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, -0.0, 0.9, -0.0, -0.1)
 
 antiTab:AddToggle({
     Name = "Anti-Void",
@@ -469,13 +480,6 @@ antiTab:AddToggle({
             end
         end
     end    
-})
-
-mainTab:AddButton({
-    Name = "Destroy GUI",
-    Callback = function()
-        OrionLib:Destroy()
-    end
 })
 
 OrionLib:Init()
