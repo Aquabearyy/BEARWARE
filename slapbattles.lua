@@ -56,28 +56,28 @@ local FarmReplica = mainTab:AddToggle({
     Default = false,
     Callback = function(Value)
         ReplicaFarm = Value
-        if not game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" or not game.Players.LocalPlayer.Character.IsInDefaultArena.Value then
+        if game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
+            if ReplicaFarm == true then
+                coroutine.wrap(SpamReplica)()
+            end
+            
+            while ReplicaFarm and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true do
+                for i,v in pairs(workspace:GetChildren()) do
+                    if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
+                        game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
+                    end
+                end
+                task.wait()
+            end
+        elseif ReplicaFarm == true then
             OrionLib:MakeNotification({
                 Name = "Error",
                 Content = "You don't have Replica equipped or you aren't in the island default",
                 Image = "rbxassetid:7733658504",
                 Time = 5
             })
-            ReplicaFarm = false
+            wait(0.05)
             FarmReplica:Set(false)
-            return
-        end
-        
-        if ReplicaFarm then
-            coroutine.wrap(SpamReplica)()
-            
-            while ReplicaFarm and wait() do
-                for i,v in pairs(workspace:GetChildren()) do
-                    if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
-                        game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
-                    end
-                end
-            end
         end
     end
 })
@@ -218,59 +218,82 @@ antiTab:AddToggle({
 })
 
 local slapEnabled = false
-local slapDistance = 25
-local slapCooldown = 0.2
+local slapDistance = 30
+local slapCooldown = 0.6
+local lastSlapTime = 0
 
 combatTab:AddToggle({
     Name = "Slap Aura",
     Default = false,
-    Save = true,
-    Flag = "slapAuraToggle", 
-    Callback = function(state)
-        slapEnabled = state
-        while slapEnabled do
-            for i,v in pairs(game.Players:GetChildren()) do
-                if v ~= game.Players.LocalPlayer and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and v.Character then
-                    if v.Character:FindFirstChild("entered") and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("rock") == nil and v.Character.HumanoidRootPart.BrickColor ~= BrickColor.new("New Yeller") and v.Character.Ragdolled.Value == false then
-                        if v.Character.Head:FindFirstChild("UnoReverseCard") == nil or game.Players.LocalPlayer.leaderstats.Glove.Value == "Error" then
-                            Magnitude = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
-                            if slapDistance >= Magnitude then
-                                shared.gloveHits[game.Players.LocalPlayer.leaderstats.Glove.Value]:FireServer(v.Character:WaitForChild("HumanoidRootPart"),true)
-                            end
-                        end
+    Callback = function(Value)
+        slapEnabled = Value
+        while slapEnabled and task.wait() do
+            if tick() - lastSlapTime < slapCooldown then continue end
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then continue end
+            
+            local playerPosition = player.Character.HumanoidRootPart.Position
+            local closestPlayer = nil
+            local closestDistance = slapDistance
+            
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
+                if otherPlayer ~= player and 
+                   otherPlayer.Character and 
+                   otherPlayer.Character:FindFirstChild("HumanoidRootPart") and
+                   otherPlayer.Character:FindFirstChild("Head") then
+                    local distance = (playerPosition - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if distance <= closestDistance then
+                        closestDistance = distance
+                        closestPlayer = otherPlayer
                     end
                 end
             end
-            task.wait(slapCooldown)
+            
+            if closestPlayer then
+                local currentGlove = player.leaderstats.Glove.Value
+                local remotes = {
+                    ["Default"] = "b", ["Extended"] = "b", ["Dual"] = "GeneralHit", ["Diamond"] = "DiamondHit",
+                    ["ZZZZZZZ"] = "ZZZZZZZHit", ["Brick"] = "BrickHit", ["Snow"] = "SnowHit", ["Pull"] = "PullHit",
+                    ["Flash"] = "FlashHit", ["Spring"] = "springhit", ["Swapper"] = "HitSwapper", ["Bull"] = "BullHit",
+                    ["Dice"] = "DiceHit", ["Ghost"] = "GhostHit", ["Thanos"] = "ThanosHit", ["Stun"] = "HtStun",
+                    ["Za Hando"] = "zhrmat", ["Fort"] = "Fort", ["Magnet"] = "MagnetHIT", ["Pusher"] = "PusherHit",
+                    ["Anchor"] = "hitAnchor", ["Space"] = "HtSpace", ["Boomerang"] = "BoomerangH",
+                    ["Speedrun"] = "Speedrunhit", ["Mail"] = "MailHit", ["Golden"] = "GoldenHit",
+                    ["THICK"] = "GeneralHit", ["Squid"] = "GeneralHit", ["Tycoon"] = "GeneralHit",
+                    ["Flex"] = "FlexHit", ["CULT"] = "CULTHit", ["Orbit"] = "Orbihit",
+                    ["Frostbite"] = "GeneralHit", ["Avatar"] = "GeneralHit"
+                }
+                local remote = remotes[currentGlove] or "GeneralHit"
+                local remoteEvent = ReplicatedStorage:FindFirstChild(remote)
+                if remoteEvent then
+                    lastSlapTime = tick()
+                    remoteEvent:FireServer(closestPlayer.Character.Head)
+                end
+            end
         end
-    end
+    end    
 })
 
 combatTab:AddSlider({
-    Name = "Slap Range",
-    Min = 5,
+    Name = "Slap Aura Range",
+    Min = 10,
     Max = 50,
-    Default = 25,
+    Default = 30,
     Color = Color3.fromRGB(255,255,255),
     Increment = 1,
     ValueName = "studs",
-    Save = true,
-    Flag = "slapRangeSlider",
     Callback = function(Value)
         slapDistance = Value
     end    
 })
 
 combatTab:AddSlider({
-    Name = "Slap Cooldown",
+    Name = "Slap Aura Cooldown",
     Min = 0.1,
     Max = 2,
-    Default = 0.2,
+    Default = 0.7,
     Color = Color3.fromRGB(255,255,255),
     Increment = 0.1,
     ValueName = "seconds",
-    Save = true,
-    Flag = "slapCooldownSlider",
     Callback = function(Value)
         slapCooldown = Value
     end    
