@@ -276,7 +276,6 @@ combatTab:AddSlider({
     end    
 })
 
-})
 badgesTab:AddButton({
     Name = "Get Lamp Glove",
     Default = false,
