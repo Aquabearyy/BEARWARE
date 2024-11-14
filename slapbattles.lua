@@ -51,7 +51,7 @@ local function SpamReplica()
     end
 end
 
-local FarmReplica = mainTab:AddToggle({
+FarmReplica = mainTab:AddToggle({
     Name = "Auto Slap Replica",
     Default = false,
     Callback = function(Value)
