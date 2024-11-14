@@ -56,12 +56,16 @@ local FarmReplica = mainTab:AddToggle({
     Default = false,
     Callback = function(Value)
         ReplicaFarm = Value
-        if game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
-            if ReplicaFarm == true then
-                coroutine.wrap(SpamReplica)()
-            end
+        if Value and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
+            coroutine.wrap(SpamReplica)()
             
-            while ReplicaFarm and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true do
+            while ReplicaFarm do
+                if not (game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true) then
+                    ReplicaFarm = false
+                    FarmReplica:Set(false)
+                    break
+                end
+                
                 for i,v in pairs(workspace:GetChildren()) do
                     if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
                         game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
@@ -69,7 +73,7 @@ local FarmReplica = mainTab:AddToggle({
                 end
                 task.wait()
             end
-        elseif ReplicaFarm == true then
+        elseif Value then
             OrionLib:MakeNotification({
                 Name = "Error",
                 Content = "You don't have Replica equipped or you aren't in the island default",
