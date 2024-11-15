@@ -468,6 +468,19 @@ local mainId = 6403373529
 badgesTab:AddButton({
    Name = "Get Fan and Boxer",
    Callback = function()
+       local hasFanBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 2657379023348335)
+       local hasBoxerBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 1223765330375569)
+       
+       if hasFanBadge and hasBoxerBadge then
+           OrionLib:MakeNotification({
+               Name = "Error",
+               Content = "You already have Fan and Boxer Glove badges!",
+               Image = "rbxassetid://7733658504",
+               Time = 5
+           })
+           return
+       end
+
        local brazilScript = [[
            if game.PlaceId == ]]..brazilId..[[ then
                wait(1)
@@ -491,11 +504,52 @@ badgesTab:AddButton({
                end
                wait(1)
                game:GetService("TeleportService"):Teleport(]]..mainId..[[)
+           else
+               loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/loader.lua"))()
            end
        ]]
        queueonteleport(brazilScript)
        game:GetService("TeleportService"):Teleport(brazilId, game.Players.LocalPlayer)
    end
+})
+
+badgesTab:AddButton({
+    Name = "Get Bind Glove",
+    Callback = function()
+        local hasBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
+        
+        if hasBadge then
+            OrionLib:MakeNotification({
+                Name = "Error",
+                Content = "You already have the Bind Glove badge!",
+                Image = "rbxassetid://7733658504",
+                Time = 5
+            })
+            return
+        end
+
+        local teleportFunc = queueonteleport or queue_on_teleport
+        if teleportFunc then
+            local script = [[
+                if not game:IsLoaded() then 
+                    game.Loaded:Wait() 
+                end
+                
+                repeat wait() until game.Players.LocalPlayer
+                
+                repeat 
+                    fireclickdetector(workspace.Orb.ClickDetector)
+                    wait(1)
+                until game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 3199562682373814)
+                
+                wait(1)
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/loader.lua"))()
+            ]]
+            teleportFunc(script)
+        end
+        
+        game:GetService("TeleportService"):Teleport(74169485398268)
+    end
 })
 
 --[[
