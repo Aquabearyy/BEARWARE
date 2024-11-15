@@ -395,6 +395,8 @@ local badgesTab = Window:MakeTab({
     PremiumOnly = false
 })
 
+badgesTab:AddLabel("Some features in the Badges Tab are still in development.")
+
 badgesTab:AddButton({
     Name = "Get Lamp Glove",
     Default = false,
@@ -481,7 +483,7 @@ badgesTab:AddButton({
            return
        end
 
-       if game.PlaceId == 7234087065 then
+       local brazilScript = [[
            wait(1)
            local player = game.Players.LocalPlayer
            repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -502,18 +504,10 @@ badgesTab:AddButton({
                fireclickdetector(workspace.BoxingGloves.ClickDetector)
            end
            wait(1)
-           
-           local newHasFanBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 2657379023348335)
-           local newHasBoxerBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 1223765330375569)
-           
-           if newHasFanBadge and newHasBoxerBadge then
-               player:Kick("Boxer and Fan Successfully Obtained!")
-           else
-               player:Kick("Failed to obtain badges!")
-           end
-       else
-           game:GetService("TeleportService"):Teleport(7234087065)
-       end
+           game:GetService("TeleportService"):Teleport(6403373529)
+       ]]
+       queueonteleport(brazilScript)
+       game:GetService("TeleportService"):Teleport(7234087065, game.Players.LocalPlayer)
    end
 })
 
@@ -532,20 +526,23 @@ badgesTab:AddButton({
             return
         end
 
-        if game.PlaceId == 74169485398268 then
+        local bindScript = [[
+            if not game:IsLoaded() then 
+                game.Loaded:Wait() 
+            end
+            
             repeat 
                 task.wait()
                 if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
                     fireclickdetector(workspace.Orb.ClickDetector)
-                    if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814) then
-                        player:Kick("Bind Glove Successfully Obtained!")
-                        break
-                    end
                 end
-            until false
-        else
-            game:GetService("TeleportService"):Teleport(74169485398268)
-        end
+            until game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 3199562682373814)
+            
+            game:GetService("TeleportService"):Teleport(6403373529)
+        ]]
+        
+        queueonteleport(bindScript)
+        game:GetService("TeleportService"):Teleport(74169485398268)
     end
 })
 
