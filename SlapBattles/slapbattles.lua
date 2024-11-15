@@ -496,32 +496,33 @@ badgesTab:AddButton({
             game:GetService("TeleportService"):Teleport(mainId, player)
         else
             local brazilScript = [[
-                repeat wait() until game:IsLoaded()
-                local player = game.Players.LocalPlayer
-                repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                
-                player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
-                wait(0.5)
-                
-                local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
-                remoteEvents.SuitUpClown:FireServer()
-                wait(0.1)
-                remoteEvents.KeyQuest:FireServer()
-                wait(0.1)
-                remoteEvents.KeyAcquired:FireServer()
-                wait(0.1)
-                remoteEvents.KeyBadgeReward:FireServer()
-                wait(0.1)
-                
-                player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
-                wait(0.5)
-                
-                if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
-                    fireclickdetector(workspace.BoxingGloves.ClickDetector)
+                if game.PlaceId == ]]..brazilId..[[ then
+                    local player = game.Players.LocalPlayer
+                    repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+                    wait(0.5)
+                    
+                    local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
+                    remoteEvents.SuitUpClown:FireServer()
+                    wait(0.1)
+                    remoteEvents.KeyQuest:FireServer()
+                    wait(0.1)
+                    remoteEvents.KeyAcquired:FireServer()
+                    wait(0.1)
+                    remoteEvents.KeyBadgeReward:FireServer()
+                    wait(0.1)
+                    
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+                    wait(0.5)
+                    
+                    if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
+                        fireclickdetector(workspace.BoxingGloves.ClickDetector)
+                    end
+                    
+                    wait(1)
+                    game:GetService("TeleportService"):Teleport(]]..mainId..[[)
                 end
-                
-                wait(1)
-                game:GetService("TeleportService"):Teleport(]]..mainId..[[, player)
             ]]
             queueonteleport(brazilScript)
             game:GetService("TeleportService"):Teleport(brazilId, player)
