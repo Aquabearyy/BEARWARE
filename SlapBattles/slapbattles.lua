@@ -532,33 +532,28 @@ badgesTab:AddButton({
             return
         end
 
-        local teleportFunc = queueonteleport or queue_on_teleport
-        if teleportFunc then
-            local bindScript = [[
-                if not game:IsLoaded() then 
-                    game.Loaded:Wait() 
-                end
-                
-                local player = game.Players.LocalPlayer
-                local bindBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
-                
-                repeat 
-                    task.wait()
-                    if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
-                        fireclickdetector(workspace.Orb.ClickDetector)
-                    end
-                until bindBadge
-                
-                if bindBadge then
-                    player:Kick("Bind Glove Successfully Obtained!")
-                else
-                    player:Kick("Failed to obtain Bind Glove!")
-                end
-            ]]
+        local bindScript = [[
+            if not game:IsLoaded() then 
+                game.Loaded:Wait() 
+            end
             
-            teleportFunc(bindScript)
-        end
+            local player = game.Players.LocalPlayer
+            
+            repeat 
+                task.wait()
+                if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
+                    fireclickdetector(workspace.Orb.ClickDetector)
+                end
+            until game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
+            
+            if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814) then
+                player:Kick("Bind Glove Successfully Obtained!")
+            else
+                player:Kick("Failed to obtain Bind Glove!")
+            end
+        ]]
         
+        queueonteleport(bindScript)
         game:GetService("TeleportService"):Teleport(74169485398268)
     end
 })
