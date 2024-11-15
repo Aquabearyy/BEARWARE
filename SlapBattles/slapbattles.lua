@@ -18,27 +18,19 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "sxlent404"
 })
 
+--[[
+
+███    ███  █████  ██ ███    ██     ████████  █████  ██████  
+████  ████ ██   ██ ██ ████   ██        ██    ██   ██ ██   ██ 
+██ ████ ██ ███████ ██ ██ ██  ██        ██    ███████ ██████  
+██  ██  ██ ██   ██ ██ ██  ██ ██        ██    ██   ██ ██   ██ 
+██      ██ ██   ██ ██ ██   ████        ██    ██   ██ ██████  
+                                                                                  
+]]
+
 local mainTab = Window:MakeTab({
     Name = "Main",
     Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local antiTab = Window:MakeTab({
-    Name = "Anti",
-    Icon = "rbxassetid://13793170713",
-    PremiumOnly = false
-})
-
-local badgesTab = Window:MakeTab({
-    Name = "Badges",
-    Icon = "rbxassetid://16170504068",
-    PremiumOnly = false
-})
-
-local combatTab = Window:MakeTab({
-    Name = "Combat",
-    Icon = "rbxassetid://124159074947754",
     PremiumOnly = false
 })
 
@@ -197,6 +189,57 @@ player.CharacterAdded:Connect(function(char)
     end
 end)
 
+mainTab:AddButton({
+    Name = "Get Free Titan Glove",
+    Callback = function()
+        for i, v in pairs(game:GetService("ReplicatedStorage")._NETWORK:GetChildren()) do
+            if v.Name:find("{") then
+                local args = {[1] = "Titan"}
+                if v:IsA("RemoteEvent") then
+                    v:FireServer(unpack(args))
+                elseif v:IsA("RemoteFunction") then
+                    local result = v:InvokeServer(unpack(args))
+                end
+            end
+        end
+    end    
+})
+
+mainTab:AddButton({
+    Name = "No Cooldown",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+        
+        while character.Humanoid.Health ~= 0 do
+            local localscript = tool:FindFirstChildOfClass("LocalScript")
+            local localscriptclone = localscript:Clone()
+            localscriptclone = localscript:Clone()
+            localscriptclone:Clone()
+            localscript:Destroy()
+            localscriptclone.Parent = tool
+            wait(0.1)
+        end
+    end    
+})
+
+--[[
+
+ █████  ███    ██ ████████ ██     ████████  █████  ██████  
+██   ██ ████   ██    ██    ██        ██    ██   ██ ██   ██ 
+███████ ██ ██  ██    ██    ██        ██    ███████ ██████  
+██   ██ ██  ██ ██    ██    ██        ██    ██   ██ ██   ██ 
+██   ██ ██   ████    ██    ██        ██    ██   ██ ██████  
+                                                                 
+]]
+
+local antiTab = Window:MakeTab({
+    Name = "Anti",
+    Icon = "rbxassetid://13793170713",
+    PremiumOnly = false
+})
+
 local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, -0.0, 0.9, -0.0, -0.1)
 
 antiTab:AddToggle({
@@ -219,6 +262,39 @@ antiTab:AddToggle({
             end
         end
     end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Ragdoll",
+    Default = false,
+    Callback = function(Value)
+        _G.AntiRagdoll = Value
+        while _G.AntiRagdoll and task.wait() do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                if workspace[player.Name]:FindFirstChild("Ragdolled") and workspace[player.Name].Ragdolled.Value == true then
+                    player.Character.HumanoidRootPart.Anchored = true
+                else
+                    player.Character.HumanoidRootPart.Anchored = false
+                end
+            end
+        end
+    end    
+})
+
+--[[
+
+ ██████  ██████  ███    ███ ██████   █████  ████████     ████████  █████  ██████  
+██      ██    ██ ████  ████ ██   ██ ██   ██    ██           ██    ██   ██ ██   ██ 
+██      ██    ██ ██ ████ ██ ██████  ███████    ██           ██    ███████ ██████  
+██      ██    ██ ██  ██  ██ ██   ██ ██   ██    ██           ██    ██   ██ ██   ██ 
+ ██████  ██████  ██      ██ ██████  ██   ██    ██           ██    ██   ██ ██████  
+                                                                                  
+]]
+
+local combatTab = Window:MakeTab({
+    Name = "Combat",
+    Icon = "rbxassetid://124159074947754",
+    PremiumOnly = false
 })
 
 local slapEnabled = false
@@ -303,6 +379,22 @@ combatTab:AddSlider({
     end    
 })
 
+--[[
+
+██████   █████  ██████   ██████  ███████ ███████     ████████  █████  ██████  
+██   ██ ██   ██ ██   ██ ██       ██      ██             ██    ██   ██ ██   ██ 
+██████  ███████ ██   ██ ██   ███ █████   ███████        ██    ███████ ██████  
+██   ██ ██   ██ ██   ██ ██    ██ ██           ██        ██    ██   ██ ██   ██ 
+██████  ██   ██ ██████   ██████  ███████ ███████        ██    ██   ██ ██████  
+
+]]
+
+local badgesTab = Window:MakeTab({
+    Name = "Badges",
+    Icon = "rbxassetid://16170504068",
+    PremiumOnly = false
+})
+
 badgesTab:AddButton({
     Name = "Get Lamp Glove",
     Default = false,
@@ -370,40 +462,53 @@ badgesTab:AddButton({
     end
 })
 
-mainTab:AddButton({
-    Name = "Get Free Titan Glove",
+local brazilId = 7234087065
+local mainId = 6403373529
+
+badgesTab:AddButton({
+    Name = "Get Fan And Boxer",
     Callback = function()
-        for i, v in pairs(game:GetService("ReplicatedStorage")._NETWORK:GetChildren()) do
-            if v.Name:find("{") then
-                local args = {[1] = "Titan"}
-                if v:IsA("RemoteEvent") then
-                    v:FireServer(unpack(args))
-                elseif v:IsA("RemoteFunction") then
-                    local result = v:InvokeServer(unpack(args))
-                end
+        if game.PlaceId == brazilId then
+            local player = game.Players.LocalPlayer
+            repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+            wait(0.5)
+            
+            local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
+            remoteEvents.SuitUpClown:FireServer()
+            wait(0.1)
+            remoteEvents.KeyQuest:FireServer()
+            wait(0.1)
+            remoteEvents.KeyAcquired:FireServer()
+            wait(0.1)
+            remoteEvents.KeyBadgeReward:FireServer()
+            wait(0.1)
+            
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+            wait(0.5)
+            
+            if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
+                fireclickdetector(workspace.BoxingGloves.ClickDetector)
             end
+            
+            wait(1)
+            game:GetService("TeleportService"):Teleport(mainId, player)
+        else
+            game:GetService("TeleportService"):Teleport(brazilId, player)
         end
-    end    
+    end
 })
 
-mainTab:AddButton({
-    Name = "No Cooldown",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
-        
-        while character.Humanoid.Health ~= 0 do
-            local localscript = tool:FindFirstChildOfClass("LocalScript")
-            local localscriptclone = localscript:Clone()
-            localscriptclone = localscript:Clone()
-            localscriptclone:Clone()
-            localscript:Destroy()
-            localscriptclone.Parent = tool
-            wait(0.1)
-        end
-    end    
-})
+--[[
+
+██       ██████   ██████  █████  ██          ████████  █████  ██████  
+██      ██    ██ ██      ██   ██ ██             ██    ██   ██ ██   ██ 
+██      ██    ██ ██      ███████ ██             ██    ███████ ██████  
+██      ██    ██ ██      ██   ██ ██             ██    ██   ██ ██   ██ 
+███████  ██████   ██████ ██   ██ ███████        ██    ██   ██ ██████  
+
+]]
 
 local localTab = Window:MakeTab({
     Name = "Local",
@@ -488,23 +593,6 @@ localTab:AddButton({
         end)
         
         tool.Parent = game.Players.LocalPlayer.Backpack
-    end    
-})
-
-antiTab:AddToggle({
-    Name = "Anti Ragdoll",
-    Default = false,
-    Callback = function(Value)
-        _G.AntiRagdoll = Value
-        while _G.AntiRagdoll and task.wait() do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                if workspace[player.Name]:FindFirstChild("Ragdolled") and workspace[player.Name].Ragdolled.Value == true then
-                    player.Character.HumanoidRootPart.Anchored = true
-                else
-                    player.Character.HumanoidRootPart.Anchored = false
-                end
-            end
-        end
     end    
 })
 
