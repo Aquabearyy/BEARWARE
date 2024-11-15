@@ -34,50 +34,6 @@ local mainTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-local ReplicaFarm = false
-
-local function SpamReplica()
-    while ReplicaFarm do
-        game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
-        wait(20)
-    end
-end
-
-FarmReplica = mainTab:AddToggle({
-    Name = "Auto Slap Replica",
-    Default = false,
-    Callback = function(Value)
-        ReplicaFarm = Value
-        if Value and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
-            coroutine.wrap(SpamReplica)()
-            
-            while ReplicaFarm do
-                if not (game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true) then
-                    ReplicaFarm = false
-                    FarmReplica:Set(false)
-                    break
-                end
-                
-                for i,v in pairs(workspace:GetChildren()) do
-                    if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
-                        game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
-                    end
-                end
-                task.wait()
-            end
-        elseif Value then
-            OrionLib:MakeNotification({
-                Name = "Error",
-                Content = "You don't have Replica equipped or you aren't in the island default",
-                Image = "rbxassetid:7733658504",
-                Time = 5
-            })
-            wait(0.05)
-            FarmReplica:Set(false)
-        end
-    end
-})
-
 local Animations = {
     Floss = nil,
     Groove = nil,
@@ -228,6 +184,27 @@ mainTab:AddButton({
 
 mainTab:AddParagraph("Notice.","No Cooldown Has To Be Used Manually And In The Arena.")
 
+mainTab:AddToggle({
+    Name = "Auto Enter Arena",
+    Default = false,
+    Flag = "AutoArena",
+    Save = true,
+    Callback = function(Value)
+        _G.AutoArena = Value
+        while _G.AutoArena do
+            local character = game.Players.LocalPlayer.Character
+            if character and not character:FindFirstChild("entered") then
+                local portal = game.workspace.Lobby.Portals.NormalArena.PortalTrigger
+                portal.CanCollide = false
+                if character:FindFirstChild("HumanoidRootPart") then
+                    character.HumanoidRootPart.CFrame = portal.CFrame
+                end
+            end
+            wait(0.1)
+        end
+    end    
+})
+
 --[[
 
  █████  ███    ██ ████████ ██     ████████  █████  ██████  
@@ -281,6 +258,155 @@ antiTab:AddToggle({
                     player.Character.HumanoidRootPart.Anchored = false
                 end
             end
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Ice",
+    Default = false,
+    Flag = "AntiIce",
+    Save = true,
+    Callback = function(Value)
+        _G.AntiIce = Value
+        while _G.AntiIce do
+            if game.Players.LocalPlayer.Character then
+                for i,v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+                    if v.Name == "Icecube" then
+                        v:Destroy()
+                        game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
+                        game.Players.LocalPlayer.Character.Humanoid.AutoRotate = true
+                    end
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Reaper",
+    Default = false,
+    Flag = "AntiReaper",
+    Save = true,
+    Callback = function(Value)
+        _G.AntiReaper = Value
+        while _G.AntiReaper do
+            for i,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if v.Name == "DeathMark" then
+                    game:GetService("ReplicatedStorage").ReaperGone:FireServer(game:GetService("Players").LocalPlayer.Character.DeathMark)
+                    if game:GetService("Lighting"):FindFirstChild("DeathMarkColorCorrection") then
+                        game:GetService("Lighting").DeathMarkColorCorrection:Destroy()
+                    end
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Pusher",
+    Default = false,
+    Flag = "AntiPusher", 
+    Save = true,
+    Callback = function(Value)
+        _G.AntiPusher = Value
+        while _G.AntiPusher do
+            for i,v in pairs(game.Workspace:GetChildren()) do
+                if v.Name == "wall" then
+                    v.CanCollide = false
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Defend",
+    Default = false,
+    Flag = "AntiDefend",
+    Save = true,
+    Callback = function(Value)
+        _G.AntiDefend = Value
+        while _G.AntiDefend do
+            for i,v in pairs(game.Workspace:GetChildren()) do
+                if v.Name == "wall" then
+                    v.CanCollide = false
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Megarock",
+    Default = false,
+    Flag = "AntiRock",
+    Save = true,
+    Callback = function(Value)
+        _G.AntiRock = Value
+        while _G.AntiRock do
+            for _,v in pairs(game.Players:GetChildren()) do
+                if v.Character and v.Character:FindFirstChild("rock") then
+                    v.Character.rock.CanTouch = false
+                    v.Character.rock.CanQuery = false
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Sbeve",
+    Default = false,
+    Flag = "AntiSbeve",
+    Save = true,
+    Callback = function(Value)
+        _G.AntiSbeve = Value
+        while _G.AntiSbeve do
+            for _,v in pairs(game.Players:GetChildren()) do
+                if v.Character and v.Character:FindFirstChild("rock") then
+                    v.Character.rock.CanTouch = false
+                    v.Character.rock.CanQuery = false
+                end
+            end
+            task.wait()
+        end
+    end    
+})
+
+antiTab:AddToggle({
+    Name = "Anti Death Barriers",
+    Default = false,
+    Flag = "AntiDeath",
+    Save = true,
+    Callback = function(Value)
+        if Value then
+            for i,v in pairs(game.Workspace.DEATHBARRIER:GetChildren()) do
+                if v.ClassName == "Part" and v.Name == "BLOCK" then
+                    v.CanTouch = false
+                end
+            end
+            workspace.DEATHBARRIER.CanTouch = false
+            workspace.DEATHBARRIER2.CanTouch = false
+            workspace.dedBarrier.CanTouch = false
+            workspace.ArenaBarrier.CanTouch = false
+            workspace.AntiDefaultArena.CanTouch = false
+        else
+            for i,v in pairs(game.Workspace.DEATHBARRIER:GetChildren()) do
+                if v.ClassName == "Part" and v.Name == "BLOCK" then
+                    v.CanTouch = true
+                end
+            end
+            workspace.DEATHBARRIER.CanTouch = true
+            workspace.DEATHBARRIER2.CanTouch = true
+            workspace.dedBarrier.CanTouch = true
+            workspace.ArenaBarrier.CanTouch = true
+            workspace.AntiDefaultArena.CanTouch = true
         end
     end    
 })
@@ -568,111 +694,208 @@ local farmTab = Window:MakeTab({
 
 farmTab:AddParagraph("Notice.","Some features in the Farm Tab are still in development.")
 
+local ReplicaFarm = false
+
+local function SpamReplica()
+    while ReplicaFarm do
+        game:GetService("ReplicatedStorage").Duplicate:FireServer(true)
+        wait(20)
+    end
+end
+
+FarmReplica = farmTab:AddToggle({
+    Name = "Auto Slap Replica",
+    Default = false,
+    Callback = function(Value)
+        ReplicaFarm = Value
+        if Value and game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true then
+            coroutine.wrap(SpamReplica)()
+            
+            while ReplicaFarm do
+                if not (game.Players.LocalPlayer.leaderstats.Glove.Value == "Replica" and game.Players.LocalPlayer.Character.IsInDefaultArena.Value == true) then
+                    ReplicaFarm = false
+                    FarmReplica:Set(false)
+                    break
+                end
+                
+                for i,v in pairs(workspace:GetChildren()) do
+                    if v.Name:match(game.Players.LocalPlayer.Name) and v:FindFirstChild("HumanoidRootPart") then
+                        game.ReplicatedStorage.b:FireServer(v:WaitForChild("HumanoidRootPart"), true)
+                    end
+                end
+                task.wait()
+            end
+        elseif Value then
+            OrionLib:MakeNotification({
+                Name = "Error",
+                Content = "You don't have Replica equipped or you aren't in the island default",
+                Image = "rbxassetid:7733658504",
+                Time = 5
+            })
+            wait(0.05)
+            FarmReplica:Set(false)
+        end
+    end
+})
+
+local boxerFarmSection = farmTab:AddSection({
+	Name = "Boxer Farm"
+})
+
+local function boxerFarm()
+    if not game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 1223765330375569) then
+        OrionLib:MakeNotification({
+            Name = "Error",
+            Content = "You need the Boxer badge to use this feature!",
+            Image = "rbxassetid://7733658504",
+            Time = 5
+        })
+        return
+    end
+
+    for _, v in pairs(game:GetService("ReplicatedStorage")._NETWORK:GetChildren()) do
+        if v.Name:find("{") and v:IsA("RemoteEvent") then
+            v:FireServer("Boxer")
+        end
+    end
+    
+    wait(0.5)
+
+    local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+    local portal = game.workspace.Lobby.Portals.NormalArena.PortalTrigger
+    portal.CanCollide = false
+    
+    spawn(function()
+        while not character:FindFirstChild("entered") do
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = portal.CFrame
+            end
+            wait(0.1)
+        end
+    end)
+    
+    wait(0.5)
+
+    local function getRandomPlayer()
+        local players = game:GetService("Players"):GetPlayers()
+        for i = 1, 50 do
+            local randomPlayer = players[math.random(1, #players)]
+            if randomPlayer ~= game.Players.LocalPlayer 
+               and randomPlayer.Character
+               and randomPlayer.Character:FindFirstChild("Ragdolled")
+               and randomPlayer.Character.Ragdolled.Value == false
+               and not randomPlayer.Character:FindFirstChild("rock") then
+                return randomPlayer
+            end
+            wait(0.05)
+        end
+        return nil
+    end
+
+    local target = getRandomPlayer()
+    if target then
+        spawn(function()
+            for i = 1, 1000 do
+                if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and
+                   target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+                    game.ReplicatedStorage.Events.Boxing:FireServer(target, true)
+                    game.ReplicatedStorage.Events.Boxing:FireServer(target, false)
+                else
+                    break
+                end
+                wait(0.05)
+            end
+            if _G.AutoRejoin then
+                rejoinServer()
+            end
+        end)
+    end
+end
+
+local function rejoinServer()
+    local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    if not httprequest then return end
+    
+    local servers = {}
+    local req = httprequest({
+        Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)
+    })
+    
+    local body = game:GetService("HttpService"):JSONDecode(req.Body)
+    if body and body.data then
+        for _, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) 
+               and v.playing < v.maxPlayers and v.id ~= game.JobId then
+                table.insert(servers, 1, v.id)
+            end
+        end
+    end
+    
+    if #servers > 0 then
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
+    else
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
+    end
+end
+
+local function collectSlapples()
+    local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+    if character:FindFirstChild("entered") then
+        for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
+            if character:FindFirstChild("HumanoidRootPart") and 
+               (v.Name == "Slapple" or v.Name == "GoldenSlapple") and 
+               v:FindFirstChild("Glove") and 
+               v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
+                firetouchinterest(character.HumanoidRootPart, v.Glove, 0)
+                firetouchinterest(character.HumanoidRootPart, v.Glove, 1)
+            end
+        end
+    end
+end
+
+boxerFarmSection:AddButton({
+    Name = "Boxer Farm",
+    Callback = function()
+        if not game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 1223765330375569) then
+            OrionLib:MakeNotification({
+                Name = "Error",
+                Content = "You need the Boxer badge to use this feature!",
+                Image = "rbxassetid://7733658504",
+                Time = 5
+            })
+            return
+        end
+        _G.BoxerFarm = true
+        boxerFarm()
+    end    
+})
+
+boxerFarmSection:AddToggle({
+    Name = "Auto Rejoin",
+    Default = false,
+    Flag = "AutoRejoin",
+    Save = true,
+    Callback = function(Value)
+        _G.AutoRejoin = Value
+    end    
+})
+
+boxerFarmSection:AddParagraph("Disclaimer:","Boxer Farm Will Kick You But Will Get Around 10-50 Slaps.")
+
 farmTab:AddToggle({
     Name = "Auto Collect Slapples",
     Default = false,
+    Flag = "AutoSlapples",
+    Save = true,
     Callback = function(Value)
-        _G.CollectSlapples = Value
-        while _G.CollectSlapples do
-            local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-            if character:FindFirstChild("entered") then
-                for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
-                    if character:FindFirstChild("HumanoidRootPart") and 
-                       (v.Name == "Slapple" or v.Name == "GoldenSlapple") and 
-                       v:FindFirstChild("Glove") and 
-                       v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
-                        firetouchinterest(character.HumanoidRootPart, v.Glove, 0)
-                        firetouchinterest(character.HumanoidRootPart, v.Glove, 1)
-                    end
-                end
-            end
+        _G.AutoSlapples = Value
+        while _G.AutoSlapples do
+            collectSlapples()
             wait(0.1)
         end
     end    
 })
-
-farmTab:AddButton({
-    Name = "Boxer Farm",
-    Callback = function()
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-        
-        for _, v in pairs(game:GetService("ReplicatedStorage")._NETWORK:GetChildren()) do
-            if v.Name:find("{") and v:IsA("RemoteEvent") then
-                v:FireServer("Boxer")
-            end
-        end
-
-        local function getRandomPlayer()
-            local players = Players:GetPlayers()
-            for i = 1, 50 do
-                local randomPlayer = players[math.random(1, #players)]
-                if randomPlayer ~= player 
-                   and randomPlayer.Character
-                   and randomPlayer.Character:FindFirstChild("Ragdolled")
-                   and randomPlayer.Character.Ragdolled.Value == false
-                   and not randomPlayer.Character:FindFirstChild("rock") then
-                    return randomPlayer
-                end
-                wait(0.05)
-            end
-            return nil
-        end
-
-        local target = getRandomPlayer()
-        if target then
-            spawn(function()
-                for i = 1, 1000 do
-                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and
-                       target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                        player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-                        game.ReplicatedStorage.Events.Boxing:FireServer(target, true)
-                        game.ReplicatedStorage.Events.Boxing:FireServer(target, false)
-                    else
-                        break
-                    end
-                    wait(0.05)
-                end
-            end)
-        end
-    end    
-})
-
-farmTab:AddToggle({
-    Name = "Auto Rejoin",
-    Default = false,
-    Callback = function(Value)
-        _G.AutoRejoin = Value
-        while _G.AutoRejoin do
-            local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-            if not httprequest then return end
-            
-            local servers = {}
-            local req = httprequest({
-                Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)
-            })
-            
-            local body = game:GetService("HttpService"):JSONDecode(req.Body)
-            if body and body.data then
-                for _, v in next, body.data do
-                    if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) 
-                       and v.playing < v.maxPlayers and v.id ~= game.JobId then
-                        table.insert(servers, 1, v.id)
-                    end
-                end
-            end
-            
-            if #servers > 0 then
-                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
-            else
-                game:GetService("TeleportService"):Teleport(game.PlaceId)
-            end
-            wait(1.5)
-        end
-    end    
-})
-
-farmTab:AddParagraph("Disclaimer:","Boxer Farm Will Kick You But Will Get Around 10-50 Slaps.")
 
 --[[
 
@@ -705,6 +928,78 @@ end)
 
 slapsLabel:Set("Slaps: " .. player.leaderstats.Slaps.Value)
 gloveLabel:Set("Glove: " .. player.leaderstats.Glove.Value)
+
+local rhythmToggle = nil
+local rhythmSection = nil
+
+local function updateRhythmToggle()
+    if not rhythmSection then
+        rhythmSection = gloveModsTab:AddSection({
+            Name = "Rhythm Glove Mods"
+        })
+
+        rhythmToggle = rhythmSection:AddToggle({
+            Name = "Auto Play Rhythm",
+            Default = false,
+            Flag = "RhythmAutoPlay",
+            Save = true,
+            Callback = function(Value)
+                if Value and player.leaderstats.Glove.Value ~= "Rhythm" then
+                    wait(0.05)
+                    rhythmToggle:Set(false)
+                    OrionLib:MakeNotification({
+                        Name = "Error",
+                        Content = "You need the Rhythm Glove equipped to use this feature!",
+                        Image = "rbxassetid://7733658504",
+                        Time = 5
+                    })
+                    return
+                end
+                
+                if Value then
+                    if not (workspace:FindFirstChild(game.Players.LocalPlayer.Name) and
+                           workspace[game.Players.LocalPlayer.Name]:FindFirstChild("entered")) then
+                        wait(0.05)
+                        rhythmToggle:Set(false)
+                        OrionLib:MakeNotification({
+                            Name = "Error",
+                            Content = "You need to enter the arena first!",
+                            Image = "rbxassetid://7733658504",
+                            Time = 5
+                        })
+                        return
+                    end
+                    
+                    _G.RhythmConnection = game.Players.LocalPlayer.PlayerGui.Rhythm.MainFrame.Bars.ChildAdded:Connect(function()
+                        task.delay(1.7, function()
+                            if game.Players.LocalPlayer.Character and 
+                               game.Players.LocalPlayer.Character:FindFirstChild("Rhythm") and
+                               workspace:FindFirstChild(game.Players.LocalPlayer.Name) and
+                               workspace[game.Players.LocalPlayer.Name]:FindFirstChild("entered") then
+                                game.Players.LocalPlayer.Character.Rhythm:Activate()
+                            else
+                                rhythmToggle:Set(false)
+                            end
+                        end)
+                    end)
+                else
+                    if _G.RhythmConnection then
+                        _G.RhythmConnection:Disconnect()
+                        _G.RhythmConnection = nil
+                    end
+                end
+            end    
+        })
+    end
+end
+
+player.leaderstats.Glove:GetPropertyChangedSignal("Value"):Connect(function()
+    if rhythmToggle then
+        rhythmToggle:Set(false)
+    end
+end)
+
+updateRhythmToggle()
 
 --[[
 
