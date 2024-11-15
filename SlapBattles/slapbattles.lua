@@ -466,89 +466,36 @@ local brazilId = 7234087065
 local mainId = 6403373529
 
 badgesTab:AddButton({
-    Name = "Get Fan And Boxer",
-    Callback = function()
-        local function waitForCharacter(player)
-            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-                local char = player.CharacterAdded:Wait()
-                char:WaitForChild("HumanoidRootPart")
-            end
-            return player.Character
-        end
-
-        if game.PlaceId == brazilId then
-            local player = game.Players.LocalPlayer
-            local character = waitForCharacter(player)
-            
-            character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
-            wait(0.5)
-            
-            local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
-            remoteEvents.SuitUpClown:FireServer()
-            wait(0.1)
-            remoteEvents.KeyQuest:FireServer()
-            wait(0.1)
-            remoteEvents.KeyAcquired:FireServer()
-            wait(0.1)
-            remoteEvents.KeyBadgeReward:FireServer()
-            wait(0.1)
-            
-            character = waitForCharacter(player)  -- Re-check character after events
-            character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
-            wait(0.5)
-            
-            if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
-                fireclickdetector(workspace.BoxingGloves.ClickDetector)
-            end
-            
-            wait(1)
-            game:GetService("TeleportService"):Teleport(mainId, player)
-            return
-        else
-            local brazilScript = [[
-                if game.PlaceId == ]]..brazilId..[[ then
-                    local player = game.Players.LocalPlayer
-                    local function waitForCharacter(player)
-                        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-                            local char = player.CharacterAdded:Wait()
-                            char:WaitForChild("HumanoidRootPart")
-                        end
-                        return player.Character
-                    end
-
-                    local character = waitForCharacter(player)
-                    
-                    character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
-                    wait(0.5)
-                    
-                    local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
-                    remoteEvents.SuitUpClown:FireServer()
-                    wait(0.1)
-                    remoteEvents.KeyQuest:FireServer()
-                    wait(0.1)
-                    remoteEvents.KeyAcquired:FireServer()
-                    wait(0.1)
-                    remoteEvents.KeyBadgeReward:FireServer()
-                    wait(0.1)
-                    
-                    character = waitForCharacter(player)  -- Re-check character after events
-                    character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
-                    wait(0.5)
-                    
-                    if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
-                        fireclickdetector(workspace.BoxingGloves.ClickDetector)
-                    end
-                    
-                    wait(1)
-                    game:GetService("TeleportService"):Teleport(]]..mainId..[[)
-                    return
-                end
-            ]]
-            queueonteleport(brazilScript)
-            game:GetService("TeleportService"):Teleport(brazilId, player)
-            return
-        end
-    end
+   Name = "Get Fan and Boxer",
+   Callback = function()
+       local brazilScript = [[
+           if game.PlaceId == ]]..brazilId..[[ then
+               wait(1)
+               local player = game.Players.LocalPlayer
+               repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+               player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+               wait(0.5)
+               local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
+               remoteEvents.SuitUpClown:FireServer()
+               wait(0.1)
+               remoteEvents.KeyQuest:FireServer()
+               wait(0.1)
+               remoteEvents.KeyAcquired:FireServer()
+               wait(0.1)
+               remoteEvents.KeyBadgeReward:FireServer()
+               wait(0.1)
+               player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+               wait(0.5)
+               if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
+                   fireclickdetector(workspace.BoxingGloves.ClickDetector)
+               end
+               wait(1)
+               game:GetService("TeleportService"):Teleport(]]..mainId..[[)
+           end
+       ]]
+       queueonteleport(brazilScript)
+       game:GetService("TeleportService"):Teleport(brazilId, game.Players.LocalPlayer)
+   end
 })
 
 --[[
