@@ -513,7 +513,7 @@ badgesTab:AddButton({
    end
 })
 
-badgesTab:AddButton({
+Tab:AddButton({
     Name = "Get Bind Glove",
     Callback = function()
         local hasBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
@@ -543,9 +543,19 @@ badgesTab:AddButton({
                 until game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 3199562682373814)
                 
                 wait(1)
+                game:GetService("TeleportService"):Teleport(6403373529)
+            ]]
+            
+            local mainScript = [[
+                if not game:IsLoaded() then 
+                    game.Loaded:Wait() 
+                end
+                
                 loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/loader.lua"))()
             ]]
+            
             teleportFunc(script)
+            queueonteleport(mainScript)
         end
         
         game:GetService("TeleportService"):Teleport(74169485398268)
