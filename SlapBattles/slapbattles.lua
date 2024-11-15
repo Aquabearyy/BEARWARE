@@ -30,7 +30,7 @@ local Window = OrionLib:MakeWindow({
 
 local mainTab = Window:MakeTab({
     Name = "Main",
-    Icon = "rbxassetid://4483345998",
+    Icon = "rbxassetid://9178976271",
     PremiumOnly = false
 })
 
@@ -545,6 +545,56 @@ badgesTab:AddButton({
         game:GetService("TeleportService"):Teleport(74169485398268)
     end
 })
+
+--[[
+
+███████  █████  ██████  ███    ███     ████████  █████  ██████  
+██      ██   ██ ██   ██ ████  ████        ██    ██   ██ ██   ██ 
+█████   ███████ ██████  ██ ████ ██        ██    ███████ ██████  
+██      ██   ██ ██   ██ ██  ██  ██        ██    ██   ██ ██   ██ 
+██      ██   ██ ██   ██ ██      ██        ██    ██   ██ ██████  
+
+]]
+
+local farmTab = Window:MakeTab({
+    Name = "Farm",
+    Icon = "rbxassetid://4458889192",
+    PremiumOnly = false
+})
+
+farmTab:AddLabel("Some features in the Farm Tab are still in development.")
+
+--[[
+
+ ██████  ██       ██████  ██    ██ ███████     ███    ███  ██████  ██████  ███████     ████████  █████  ██████  
+██       ██      ██    ██ ██    ██ ██          ████  ████ ██    ██ ██   ██ ██             ██    ██   ██ ██   ██ 
+██   ███ ██      ██    ██ ██    ██ █████       ██ ████ ██ ██    ██ ██   ██ ███████        ██    ███████ ██████  
+██    ██ ██      ██    ██  ██  ██  ██          ██  ██  ██ ██    ██ ██   ██      ██        ██    ██   ██ ██   ██ 
+ ██████  ███████  ██████    ████   ███████     ██      ██  ██████  ██████  ███████        ██    ██   ██ ██████  
+
+]]
+
+local gloveModsTab = Window:MakeTab({
+    Name = "Glove Mods",
+    Icon = "rbxassetid://7733955740",
+    PremiumOnly = false
+})
+
+gloveModsTab:AddLabel("Lots of features in the Farm Tab are still in development.")
+
+local slapsLabel = gloveModsTab:AddLabel("Slaps: 0")
+local gloveLabel = gloveModsTab:AddLabel("Glove: None")
+
+player.leaderstats.Slaps:GetPropertyChangedSignal("Value"):Connect(function()
+    slapsLabel:Set("Slaps: " .. player.leaderstats.Slaps.Value)
+end)
+
+player.leaderstats.Glove:GetPropertyChangedSignal("Value"):Connect(function()
+    gloveLabel:Set("Glove: " .. player.leaderstats.Glove.Value)
+end)
+
+slapsLabel:Set("Slaps: " .. player.leaderstats.Slaps.Value)
+gloveLabel:Set("Glove: " .. player.leaderstats.Glove.Value)
 
 --[[
 
