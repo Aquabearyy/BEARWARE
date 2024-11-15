@@ -205,6 +205,8 @@ mainTab:AddButton({
     end    
 })
 
+mainTab:AddParagraph("Notice.","Free Titan Glove Only Works In The Lobby, And Will Ragdoll You.")
+
 mainTab:AddButton({
     Name = "No Cooldown",
     Callback = function()
@@ -223,6 +225,8 @@ mainTab:AddButton({
         end
     end    
 })
+
+mainTab:AddParagraph("Notice.","No Cooldown Has To Be Used Manually And In The Arena.")
 
 --[[
 
@@ -395,7 +399,7 @@ local badgesTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-badgesTab:AddLabel("Some features in the Badges Tab are still in development.")
+badgesTab:AddParagraph("Notice.","Some features in the Badges Tab are still in development.")
 
 badgesTab:AddButton({
     Name = "Get Lamp Glove",
@@ -562,7 +566,113 @@ local farmTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-farmTab:AddLabel("Some features in the Farm Tab are still in development.")
+farmTab:AddParagraph("Notice.","Some features in the Farm Tab are still in development.")
+
+farmTab:AddToggle({
+    Name = "Auto Collect Slapples",
+    Default = false,
+    Callback = function(Value)
+        _G.CollectSlapples = Value
+        while _G.CollectSlapples do
+            local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+            if character:FindFirstChild("entered") then
+                for _, v in pairs(workspace.Arena.island5.Slapples:GetChildren()) do
+                    if character:FindFirstChild("HumanoidRootPart") and 
+                       (v.Name == "Slapple" or v.Name == "GoldenSlapple") and 
+                       v:FindFirstChild("Glove") and 
+                       v.Glove:FindFirstChildWhichIsA("TouchTransmitter") then
+                        firetouchinterest(character.HumanoidRootPart, v.Glove, 0)
+                        firetouchinterest(character.HumanoidRootPart, v.Glove, 1)
+                    end
+                end
+            end
+            wait(0.1)
+        end
+    end    
+})
+
+farmTab:AddButton({
+    Name = "Boxer Farm",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        
+        for _, v in pairs(game:GetService("ReplicatedStorage")._NETWORK:GetChildren()) do
+            if v.Name:find("{") and v:IsA("RemoteEvent") then
+                v:FireServer("Boxer")
+            end
+        end
+
+        local function getRandomPlayer()
+            local players = Players:GetPlayers()
+            for i = 1, 50 do
+                local randomPlayer = players[math.random(1, #players)]
+                if randomPlayer ~= player 
+                   and randomPlayer.Character
+                   and randomPlayer.Character:FindFirstChild("Ragdolled")
+                   and randomPlayer.Character.Ragdolled.Value == false
+                   and not randomPlayer.Character:FindFirstChild("rock") then
+                    return randomPlayer
+                end
+                wait(0.05)
+            end
+            return nil
+        end
+
+        local target = getRandomPlayer()
+        if target then
+            spawn(function()
+                for i = 1, 1000 do
+                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and
+                       target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                        player.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+                        game.ReplicatedStorage.Events.Boxing:FireServer(target, true)
+                        game.ReplicatedStorage.Events.Boxing:FireServer(target, false)
+                    else
+                        break
+                    end
+                    wait(0.05)
+                end
+            end)
+        end
+    end    
+})
+
+farmTab:AddToggle({
+    Name = "Auto Rejoin",
+    Default = false,
+    Callback = function(Value)
+        _G.AutoRejoin = Value
+        while _G.AutoRejoin do
+            local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+            if not httprequest then return end
+            
+            local servers = {}
+            local req = httprequest({
+                Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)
+            })
+            
+            local body = game:GetService("HttpService"):JSONDecode(req.Body)
+            if body and body.data then
+                for _, v in next, body.data do
+                    if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) 
+                       and v.playing < v.maxPlayers and v.id ~= game.JobId then
+                        table.insert(servers, 1, v.id)
+                    end
+                end
+            end
+            
+            if #servers > 0 then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
+            else
+                game:GetService("TeleportService"):Teleport(game.PlaceId)
+            end
+            wait(1.5)
+        end
+    end    
+})
+
+farmTab:AddParagraph("Disclaimer:","Boxer Farm Will Kick You But Will Get Around 10-50 Slaps.")
 
 --[[
 
@@ -580,7 +690,7 @@ local gloveModsTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-gloveModsTab:AddLabel("Lots of features in the Farm Tab are still in development.")
+gloveModsTab:AddParagraph("Notice.","Lots of features in the Glove Mods Tab are still in development.")
 
 local slapsLabel = gloveModsTab:AddLabel("Slaps: 0")
 local gloveLabel = gloveModsTab:AddLabel("Glove: None")
