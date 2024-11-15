@@ -482,35 +482,65 @@ badgesTab:AddButton({
        end
 
        local brazilScript = [[
-           if game.PlaceId == ]]..brazilId..[[ then
-               wait(1)
-               local player = game.Players.LocalPlayer
-               repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-               player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
-               wait(0.5)
-               local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
-               remoteEvents.SuitUpClown:FireServer()
-               wait(0.1)
-               remoteEvents.KeyQuest:FireServer()
-               wait(0.1)
-               remoteEvents.KeyAcquired:FireServer()
-               wait(0.1)
-               remoteEvents.KeyBadgeReward:FireServer()
-               wait(0.1)
-               player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
-               wait(0.5)
-               if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
-                   fireclickdetector(workspace.BoxingGloves.ClickDetector)
-               end
-               wait(1)
-               game:GetService("TeleportService"):Teleport(]]..mainId..[[)
+           wait(1)
+           local player = game.Players.LocalPlayer
+           repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+           player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+           wait(0.5)
+           local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
+           remoteEvents.SuitUpClown:FireServer()
+           wait(0.1)
+           remoteEvents.KeyQuest:FireServer()
+           wait(0.1)
+           remoteEvents.KeyAcquired:FireServer()
+           wait(0.1)
+           remoteEvents.KeyBadgeReward:FireServer()
+           wait(0.1)
+           player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+           wait(0.5)
+           if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
+               fireclickdetector(workspace.BoxingGloves.ClickDetector)
+           end
+           wait(1)
+           
+           local hasFanBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 2657379023348335)
+           local hasBoxerBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 1223765330375569)
+           
+           if hasFanBadge and hasBoxerBadge then
+               player:Kick("Boxer and Fan Successfully Obtained!")
            else
-               loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/loader.lua"))()
+               player:Kick("Failed to obtain badges. Please try again.")
            end
        ]]
        queueonteleport(brazilScript)
-       game:GetService("TeleportService"):Teleport(brazilId, game.Players.LocalPlayer)
+       game:GetService("TeleportService"):Teleport(7234087065, game.Players.LocalPlayer)
    end
+})
+
+badgesTab:AddButton({
+    Name = "Get Bind Glove",
+    Default = false,
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local badgeId = 2124560559923347
+        local hasBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId)
+        
+        if hasBadge then
+            player:Kick("Already have Bind Glove badge!")
+            return
+        end
+
+        repeat
+            task.wait()
+            game:GetService("ReplicatedStorage"):WaitForChild("Duplicate"):FireServer()
+        until game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId)
+        
+        if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId) then
+            player:Kick("Bind Glove Successfully Obtained!")
+        else
+            player:Kick("Failed to obtain Bind Glove badge!")
+        end
+    end
 })
 
 --[[
