@@ -519,27 +519,47 @@ badgesTab:AddButton({
 
 badgesTab:AddButton({
     Name = "Get Bind Glove",
-    Default = false,
     Callback = function()
-        local player = game.Players.LocalPlayer
-        local badgeId = 2124560559923347
-        local hasBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId)
+        local bindBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
         
-        if hasBadge then
-            player:Kick("Already have Bind Glove badge!")
+        if bindBadge then
+            OrionLib:MakeNotification({
+                Name = "Error",
+                Content = "You already have Bind Glove badge!",
+                Image = "rbxassetid://7733658504",
+                Time = 5
+            })
             return
         end
 
-        repeat
-            task.wait()
-            game:GetService("ReplicatedStorage"):WaitForChild("Duplicate"):FireServer()
-        until game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId)
-        
-        if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, badgeId) then
-            player:Kick("Bind Glove Successfully Obtained!")
-        else
-            player:Kick("Failed to obtain Bind Glove badge!")
+        local teleportFunc = queueonteleport or queue_on_teleport
+        if teleportFunc then
+            local bindScript = [[
+                if not game:IsLoaded() then 
+                    game.Loaded:Wait() 
+                end
+                
+                local player = game.Players.LocalPlayer
+                local bindBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
+                
+                repeat 
+                    task.wait()
+                    if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
+                        fireclickdetector(workspace.Orb.ClickDetector)
+                    end
+                until bindBadge
+                
+                if bindBadge then
+                    player:Kick("Bind Glove Successfully Obtained!")
+                else
+                    player:Kick("Failed to obtain Bind Glove!")
+                end
+            ]]
+            
+            teleportFunc(bindScript)
         end
+        
+        game:GetService("TeleportService"):Teleport(74169485398268)
     end
 })
 
