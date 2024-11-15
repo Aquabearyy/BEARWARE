@@ -532,13 +532,7 @@ badgesTab:AddButton({
             return
         end
 
-        local bindScript = [[
-            if not game:IsLoaded() then 
-                game.Loaded:Wait() 
-            end
-            
-            local player = game.Players.LocalPlayer
-            
+        if game.PlaceId == 74169485398268 then
             repeat 
                 task.wait()
                 if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
@@ -549,12 +543,11 @@ badgesTab:AddButton({
             if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814) then
                 player:Kick("Bind Glove Successfully Obtained!")
             else
-                player:Kick("Failed to obtain Bind Glove!")
+                player:Kick("Failed to obtain Bind Glove badge!")
             end
-        ]]
-        
-        queueonteleport(bindScript)
-        game:GetService("TeleportService"):Teleport(74169485398268)
+        else
+            game:GetService("TeleportService"):Teleport(74169485398268)
+        end
     end
 })
 
