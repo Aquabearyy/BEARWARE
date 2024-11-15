@@ -481,7 +481,7 @@ badgesTab:AddButton({
            return
        end
 
-       local brazilScript = [[
+       if game.PlaceId == 7234087065 then
            wait(1)
            local player = game.Players.LocalPlayer
            repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -503,17 +503,17 @@ badgesTab:AddButton({
            end
            wait(1)
            
-           local hasFanBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 2657379023348335)
-           local hasBoxerBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 1223765330375569)
+           local newHasFanBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 2657379023348335)
+           local newHasBoxerBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 1223765330375569)
            
-           if hasFanBadge and hasBoxerBadge then
+           if newHasFanBadge and newHasBoxerBadge then
                player:Kick("Boxer and Fan Successfully Obtained!")
            else
-               player:Kick("Failed to obtain badges. Please try again.")
+               player:Kick("Failed to obtain badges!")
            end
-       ]]
-       queueonteleport(brazilScript)
-       game:GetService("TeleportService"):Teleport(7234087065, game.Players.LocalPlayer)
+       else
+           game:GetService("TeleportService"):Teleport(7234087065)
+       end
    end
 })
 
