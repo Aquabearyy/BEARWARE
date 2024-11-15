@@ -537,14 +537,12 @@ badgesTab:AddButton({
                 task.wait()
                 if workspace:FindFirstChild("Orb") and workspace.Orb:FindFirstChild("ClickDetector") then
                     fireclickdetector(workspace.Orb.ClickDetector)
+                    if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814) then
+                        player:Kick("Bind Glove Successfully Obtained!")
+                        break
+                    end
                 end
-            until game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
-            
-            if game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814) then
-                player:Kick("Bind Glove Successfully Obtained!")
-            else
-                player:Kick("Failed to obtain Bind Glove badge!")
-            end
+            until false
         else
             game:GetService("TeleportService"):Teleport(74169485398268)
         end
