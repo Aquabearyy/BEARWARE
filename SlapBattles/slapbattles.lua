@@ -468,11 +468,19 @@ local mainId = 6403373529
 badgesTab:AddButton({
     Name = "Get Fan And Boxer",
     Callback = function()
+        local function waitForCharacter(player)
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                local char = player.CharacterAdded:Wait()
+                char:WaitForChild("HumanoidRootPart")
+            end
+            return player.Character
+        end
+
         if game.PlaceId == brazilId then
             local player = game.Players.LocalPlayer
-            repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            local character = waitForCharacter(player)
             
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+            character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
             wait(0.5)
             
             local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
@@ -485,7 +493,8 @@ badgesTab:AddButton({
             remoteEvents.KeyBadgeReward:FireServer()
             wait(0.1)
             
-            player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+            character = waitForCharacter(player)  -- Re-check character after events
+            character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
             wait(0.5)
             
             if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
@@ -494,14 +503,22 @@ badgesTab:AddButton({
             
             wait(1)
             game:GetService("TeleportService"):Teleport(mainId, player)
-            return  -- Add return statement to stop execution
+            return
         else
             local brazilScript = [[
                 if game.PlaceId == ]]..brazilId..[[ then
                     local player = game.Players.LocalPlayer
-                    repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    local function waitForCharacter(player)
+                        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                            local char = player.CharacterAdded:Wait()
+                            char:WaitForChild("HumanoidRootPart")
+                        end
+                        return player.Character
+                    end
+
+                    local character = waitForCharacter(player)
                     
-                    player.Character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
+                    character.HumanoidRootPart.CFrame = CFrame.new(247.564193725586, -265.000030517578, -370.037526855469)
                     wait(0.5)
                     
                     local remoteEvents = game:GetService("ReplicatedStorage").RemoteEvents
@@ -514,7 +531,8 @@ badgesTab:AddButton({
                     remoteEvents.KeyBadgeReward:FireServer()
                     wait(0.1)
                     
-                    player.Character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
+                    character = waitForCharacter(player)  -- Re-check character after events
+                    character.HumanoidRootPart.CFrame = CFrame.new(4231.26123046875, 3505.86376953125, 270.451995849609)
                     wait(0.5)
                     
                     if workspace:FindFirstChild("BoxingGloves") and workspace.BoxingGloves:FindFirstChild("ClickDetector") then
@@ -523,12 +541,12 @@ badgesTab:AddButton({
                     
                     wait(1)
                     game:GetService("TeleportService"):Teleport(]]..mainId..[[)
-                    return  -- Add return statement to stop execution
+                    return
                 end
             ]]
             queueonteleport(brazilScript)
             game:GetService("TeleportService"):Teleport(brazilId, player)
-            return  -- Add return statement to stop execution
+            return
         end
     end
 })
