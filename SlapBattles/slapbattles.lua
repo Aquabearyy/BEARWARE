@@ -513,55 +513,6 @@ badgesTab:AddButton({
    end
 })
 
-badgesTab:AddButton({
-    Name = "Get Bind Glove",
-    Callback = function()
-        local hasBadge = game:GetService("BadgeService"):UserHasBadgeAsync(player.UserId, 3199562682373814)
-        
-        if hasBadge then
-            OrionLib:MakeNotification({
-                Name = "Error",
-                Content = "You already have the Bind Glove badge!",
-                Image = "rbxassetid://7733658504",
-                Time = 5
-            })
-            return
-        end
-
-        local teleportFunc = queueonteleport or queue_on_teleport
-        if teleportFunc then
-            local bindScript = [[
-                if not game:IsLoaded() then 
-                    game.Loaded:Wait() 
-                end
-                
-                repeat wait() until game.Players.LocalPlayer
-                
-                repeat 
-                    fireclickdetector(workspace.Orb.ClickDetector)
-                    wait(1)
-                until game:GetService("BadgeService"):UserHasBadgeAsync(game.Players.LocalPlayer.UserId, 3199562682373814)
-                
-                local mainScript = [[
-                    if not game:IsLoaded() then 
-                        game.Loaded:Wait() 
-                    end
-                    
-                    loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/loader.lua"))()
-                ]]
-                
-                queueonteleport(mainScript)
-                wait(1)
-                game:GetService("TeleportService"):Teleport(6403373529)
-            ]]
-            
-            teleportFunc(bindScript)
-        end
-        
-        game:GetService("TeleportService"):Teleport(74169485398268)
-    end
-})
-
 --[[
 
 ██       ██████   ██████  █████  ██          ████████  █████  ██████  
