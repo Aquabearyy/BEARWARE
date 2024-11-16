@@ -549,8 +549,8 @@ combatTab:AddToggle({
                     ["Frostbite"] = "GeneralHit", ["Avatar"] = "GeneralHit", ["Untitled Tag Glove"] = "UTGHit",
                     ["Killstreak"] = "KSHit", ["Custom"] = "CustomHit", ["Reaper"] = "ReaperHit", ["Poltergiest"] = "GeneralHit",
                     ["Rhythm"] = "rhythmhit", ["Boogie"] = "HtStun", ["Replica"] = "ReplicaHit", ["Detonator"] = "DetonatorHit",
-                    ["Spy"] = "SpyHit", ["Charge"] = "GeneralHit", ["Hallow Jack"] - "HallowHIT", ["Blocked"] = "BlockedHit",
-                    ["Chain"] = "Soon This Isnt Finished",
+                    ["Spy"] = "SpyHit", ["Charge"] = "GeneralHit", ["Hallow Jack"] = "HallowHIT", ["Blocked"] = "BlockedHit",
+                    ["Chain"] = "GeneralHit",
                 }
                 local remote = remotes[currentGlove] or "GeneralHit"
                 local remoteEvent = ReplicatedStorage:FindFirstChild(remote)
