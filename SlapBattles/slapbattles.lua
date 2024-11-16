@@ -221,9 +221,17 @@ local antiTab = Window:MakeTab({
     PremiumOnly = false
 })
 
+-- Anti-Void Section
+
+local antiVoidSection = antiTab:AddSection({
+	Name = "Anti-Void"
+})
+
+-- Anti-Void Toggle
+
 local teleportCFrame = CFrame.new(-6.7, -5.2, 1.9, -0.1, -0.0, -0.9, -0.0, 0.9, -0.0, 0.9, -0.0, -0.1)
 
-antiTab:AddToggle({
+antiVoidSection:AddToggle({
     Name = "Anti-Void",
     Default = false,
     Callback = function(Value)
@@ -245,8 +253,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Ragdoll",
+-- Anti-Ragdoll Section
+
+local antiRagdollSection = antiTab:AddSection({
+	Name = "Anti-Ragdoll"
+})
+
+-- Anti-Ragdoll Toggle
+
+antiRagdollSection:AddToggle({
+    Name = "Anti-Ragdoll",
     Default = false,
     Callback = function(Value)
         _G.AntiRagdoll = Value
@@ -262,8 +278,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Ice",
+-- Anti-Ice Section
+
+local antiIceSection = antiTab:AddSection({
+	Name = "Anti-Ice"
+})
+
+-- Anti-Ice Toggle
+
+antiIceSection:AddToggle({
+    Name = "Anti-Ice",
     Default = false,
     Flag = "AntiIce",
     Save = true,
@@ -284,8 +308,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Reaper",
+-- Anti-Reaper Section
+
+local antiReaperSection = antiTab:AddSection({
+	Name = "Anti-Reaper"
+})
+
+-- Anti-Reaper Toggle
+
+antiReaperSection:AddToggle({
+    Name = "Anti-Reaper",
     Default = false,
     Flag = "AntiReaper",
     Save = true,
@@ -305,8 +337,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Pusher",
+-- Anti-Pusher Section
+
+local antiPusherSection = antiTab:AddSection({
+	Name = "Anti-Pusher"
+})
+
+-- Anti-Pusher Toggle
+
+antiPusherSection:AddToggle({
+    Name = "Anti-Pusher",
     Default = false,
     Flag = "AntiPusher", 
     Save = true,
@@ -323,8 +363,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Defend",
+-- Anti-Defend Section
+
+local antiDefendSection = antiTab:AddSection({
+	Name = "Anti-Defend"
+})
+
+-- Anti-Defend Toggle
+
+antiDefendSection:AddToggle({
+    Name = "Anti-Defend",
     Default = false,
     Flag = "AntiDefend",
     Save = true,
@@ -341,8 +389,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Megarock",
+-- Anti-Megarock/Custom Section
+
+local antiMegarockCustomSection = antiTab:AddSection({
+	Name = "Anti-Megarock/Custom"
+})
+
+-- Anti-Megarock/Custom Toggle
+
+antiMegarockCustomSection:AddToggle({
+    Name = "Anti-Megarock/Custom",
     Default = false,
     Flag = "AntiRock",
     Save = true,
@@ -360,8 +416,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Sbeve",
+-- Anti-Sbeve Section
+
+local antiSbeveSection = antiTab:AddSection({
+	Name = "Anti-Sbeve"
+})
+
+-- Anti-Sbeve Toggle
+
+antiSbeveSection:AddToggle({
+    Name = "Anti-Sbeve",
     Default = false,
     Flag = "AntiSbeve",
     Save = true,
@@ -379,8 +443,16 @@ antiTab:AddToggle({
     end    
 })
 
-antiTab:AddToggle({
-    Name = "Anti Death Barriers",
+-- Anti-Death Barriers Section
+
+local antiDeathBarriersSection = antiTab:AddSection({
+	Name = "Anti-Death Barriers"
+})
+
+-- Anti-Death Barriers Toggle
+
+antiDeathBarriersSection:AddToggle({
+    Name = "Anti-Death Barriers",
     Default = false,
     Flag = "AntiDeath",
     Save = true,
@@ -421,11 +493,15 @@ antiTab:AddToggle({
                                                                                   
 ]]
 
+-- Combat Tab
+
 local combatTab = Window:MakeTab({
     Name = "Combat",
     Icon = "rbxassetid://124159074947754",
     PremiumOnly = false
 })
+
+-- Slap Aura Toggle
 
 local slapEnabled = false
 local slapDistance = 30
@@ -470,7 +546,11 @@ combatTab:AddToggle({
                     ["Speedrun"] = "Speedrunhit", ["Mail"] = "MailHit", ["Golden"] = "GoldenHit",
                     ["THICK"] = "GeneralHit", ["Squid"] = "GeneralHit", ["Tycoon"] = "GeneralHit",
                     ["Flex"] = "FlexHit", ["CULT"] = "CULTHit", ["Orbit"] = "Orbihit",
-                    ["Frostbite"] = "GeneralHit", ["Avatar"] = "GeneralHit"
+                    ["Frostbite"] = "GeneralHit", ["Avatar"] = "GeneralHit", ["Untitled Tag Glove"] = "UTGHit",
+                    ["Killstreak"] = "KSHit", ["Custom"] = "CustomHit", ["Reaper"] = "ReaperHit", ["Poltergiest"] = "GeneralHit",
+                    ["Rhythm"] = "rhythmhit", ["Boogie"] = "HtStun", ["Replica"] = "ReplicaHit", ["Detonator"] = "DetonatorHit",
+                    ["Spy"] = "SpyHit", ["Charge"] = "GeneralHit", ["Hallow Jack"] - "HallowHIT", ["Blocked"] = "BlockedHit",
+                    ["Chain"] = "Soon This Isnt Finished",
                 }
                 local remote = remotes[currentGlove] or "GeneralHit"
                 local remoteEvent = ReplicatedStorage:FindFirstChild(remote)
