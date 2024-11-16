@@ -1,246 +1,142 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-
-getgenv().Settings = {
-    Enabled = false,
-    FovCircle = false,
-    Fov = 100,
-    Smoothness = 0.25,
-    VisibilityCheck = false,
-    TargetPart = "Head",
-    LockMode = false,
-    LockKey = Enum.KeyCode.Q,
-    CameraFOV = 70
-}
-
 local Window = OrionLib:MakeWindow({
-    Name = "Universal Aim Assist",
+    IntroText = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+    IntroIcon = "rbxassetid://15315284749",
+    Name = "SilentHub - " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. " | " .. identifyexecutor(),
+    IntroToggleIcon = "rbxassetid://7734091286",
     HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "UniversalAim"
-})
-
-local MainTab = Window:MakeTab({
-    Name = "Main",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local VisualsTab = Window:MakeTab({
-    Name = "Visuals",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-MainTab:AddToggle({
-    Name = "Enable Aim Assist",
-    Default = false,
-    Flag = "AimbotEnabled",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.Enabled = Value
-    end
-})
-
-MainTab:AddToggle({
-    Name = "Show FOV Circle",
-    Default = false,
-    Flag = "FovCircle",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.FovCircle = Value
-    end
-})
-
-MainTab:AddToggle({
-    Name = "Visibility Check",
-    Default = false,
-    Flag = "VisibilityCheck",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.VisibilityCheck = Value
-    end
-})
-
-MainTab:AddSlider({
-    Name = "FOV Size",
-    Min = 30,
-    Max = 500,
-    Default = 100,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 1,
-    ValueName = "pixels",
-    Flag = "FovRadius",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.Fov = Value
-    end
-})
-
-MainTab:AddSlider({
-    Name = "Smoothness",
-    Min = 0,
-    Max = 1,
-    Default = 0.25,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 0.01,
-    ValueName = "multiplier",
-    Flag = "Smoothness",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.Smoothness = Value
-    end
-})
-
-MainTab:AddDropdown({
-    Name = "Target Part",
-    Default = "Head",
-    Options = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"},
-    Flag = "SelectedPart",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.TargetPart = Value
-    end
-})
-
-MainTab:AddBind({
-    Name = "Lock Key",
-    Default = Enum.KeyCode.Q,
-    Hold = false,
-    Flag = "LockKey",
-    Save = true,
-    Callback = function()
-        getgenv().Settings.LockMode = not getgenv().Settings.LockMode
-        OrionLib:MakeNotification({
-            Name = "Lock Mode",
-            Content = getgenv().Settings.LockMode and "Locked On" or "Lock Released",
-            Image = "rbxassetid://4483345998",
-            Time = 2
-        })
-    end    
-})
-
-VisualsTab:AddSlider({
-    Name = "Camera FOV",
-    Min = 30,
-    Max = 120,
-    Default = 70,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 1,
-    ValueName = "FOV",
-    Flag = "CameraFOV",
-    Save = true,
-    Callback = function(Value)
-        getgenv().Settings.CameraFOV = Value
-        game:GetService("Workspace").CurrentCamera.FieldOfView = Value
-    end
+    SaveConfig = false,
+    ConfigFolder = "sxlent404"
 })
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-
 local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
+local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
-local CircleInline = Drawing.new("Circle")
-local CircleOutline = Drawing.new("Circle")
+local MainTab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://9178976271",
+    PremiumOnly = false
+})
 
-CircleInline.Transparency = 1
-CircleInline.Thickness = 2
-CircleInline.Color = Color3.fromRGB(255, 255, 255)
-CircleInline.ZIndex = 2
+local AimbotTab = Window:MakeTab({
+    Name = "Aimbot",
+    Icon = "rbxassetid://4458889192",
+    PremiumOnly = false
+})
 
-CircleOutline.Transparency = 1
-CircleOutline.Thickness = 4
-CircleOutline.Color = Color3.new()
-CircleOutline.ZIndex = 1
+MainTab:AddSlider({
+    Name = "Camera FOV",
+    Min = 30,
+    Max = 120,
+    Default = 70,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "fov",
+    Callback = function(Value)
+        Camera.FieldOfView = Value
+    end    
+})
 
-local LockedTarget = nil
-
-local function IsVisible(Part)
-    if not getgenv().Settings.VisibilityCheck then return true end
-    local Origin = Camera.CFrame.Position
-    local Direction = Part.Position - Origin
-    local RaycastResult = Workspace:Raycast(Origin, Direction.Unit * Direction.Magnitude, 
-        RaycastParams.new({
-            FilterType = Enum.RaycastFilterType.Blacklist,
-            FilterDescendantsInstances = {LocalPlayer.Character}
-        })
-    )
-    return RaycastResult and RaycastResult.Instance:IsDescendantOf(Part.Parent)
-end
-
-local function GetClosestPlayer()
-    local Closest = nil
-    local MaxDistance = getgenv().Settings.Fov
-    local ClosestDistance = MaxDistance
-
-    for _, Player in pairs(Players:GetPlayers()) do
-        if Player ~= LocalPlayer then
-            local Character = Player.Character
-            if Character and Character:FindFirstChild(getgenv().Settings.TargetPart) and Character:FindFirstChild("Humanoid") and Character.Humanoid.Health > 0 then
-                local TargetPart = Character[getgenv().Settings.TargetPart]
-                local ScreenPosition, OnScreen = Camera:WorldToViewportPoint(TargetPart.Position)
-                
-                if OnScreen and IsVisible(TargetPart) then
-                    local Distance = (Vector2.new(ScreenPosition.X, ScreenPosition.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                    if Distance < ClosestDistance then
-                        Closest = TargetPart
-                        ClosestDistance = Distance
-                    end
+MainTab:AddToggle({
+    Name = "Triggerbot",
+    Default = false,
+    Callback = function(Value)
+        _G.Triggerbot = Value
+        while _G.Triggerbot and task.wait() do
+            local Target = Mouse.Target
+            if Target and Target.Parent and Target.Parent:FindFirstChild("Humanoid") then
+                local Player = Players:GetPlayerFromCharacter(Target.Parent)
+                if Player and Player ~= LocalPlayer then
+                    mouse1press()
+                    task.wait()
+                    mouse1release()
                 end
             end
         end
-    end
+    end    
+})
+
+local Enabled = false
+local Smoothness = 0.5
+local BodyPart = "HumanoidRootPart"
+local WallCheck = false
+
+local function getClosestPlayer()
+    local shortestDistance = math.huge
+    local closestPlayer = nil
     
-    return Closest
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(BodyPart) then
+            local magnitude = (LocalPlayer.Character[BodyPart].Position - player.Character[BodyPart].Position).Magnitude
+            
+            if WallCheck then
+                local ray = Ray.new(Camera.CFrame.Position, (player.Character[BodyPart].Position - Camera.CFrame.Position).Unit * magnitude)
+                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, player.Character})
+                if hit then continue end
+            end
+            
+            if magnitude < shortestDistance then
+                shortestDistance = magnitude
+                closestPlayer = player
+            end
+        end
+    end
+    return closestPlayer
 end
 
-local function UpdateLockedTarget()
-    if not LockedTarget or not LockedTarget.Parent or 
-       not LockedTarget.Parent:FindFirstChild("Humanoid") or 
-       LockedTarget.Parent.Humanoid.Health <= 0 then
-        LockedTarget = nil
-        return
-    end
-    
-    local _, OnScreen = Camera:WorldToViewportPoint(LockedTarget.Position)
-    if not OnScreen or (getgenv().Settings.VisibilityCheck and not IsVisible(LockedTarget)) then
-        LockedTarget = nil
-    end
-end
+AimbotTab:AddToggle({
+    Name = "Lock Enabled",
+    Default = false,
+    Callback = function(Value)
+        Enabled = Value
+    end    
+})
+
+AimbotTab:AddToggle({
+    Name = "Wall Check",
+    Default = false,
+    Callback = function(Value)
+        WallCheck = Value
+    end    
+})
+
+AimbotTab:AddDropdown({
+    Name = "Target Part",
+    Default = "HumanoidRootPart",
+    Options = {"HumanoidRootPart", "Head"},
+    Callback = function(Value)
+        BodyPart = Value
+    end    
+})
+
+AimbotTab:AddSlider({
+    Name = "Smoothness",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "smooth",
+    Callback = function(Value)
+        Smoothness = Value/100
+    end    
+})
 
 RunService.RenderStepped:Connect(function()
-    CircleInline.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
-    CircleInline.Radius = getgenv().Settings.Fov
-    CircleInline.Visible = getgenv().Settings.FovCircle
-
-    CircleOutline.Position = CircleInline.Position
-    CircleOutline.Radius = getgenv().Settings.Fov
-    CircleOutline.Visible = getgenv().Settings.FovCircle
-
-    if getgenv().Settings.Enabled then
-        if getgenv().Settings.LockMode then
-            UpdateLockedTarget()
-            if not LockedTarget then
-                LockedTarget = GetClosestPlayer()
-            end
-        else
-            LockedTarget = nil
-        end
-
-        local Target = LockedTarget or (UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and GetClosestPlayer())
-        
-        if Target then
-            local TargetPos = Camera:WorldToViewportPoint(Target.Position)
-            local MousePos = Vector2.new(Mouse.X, Mouse.Y)
-            local NewPos = Vector2.new(
-                MousePos.X + (TargetPos.X - MousePos.X) * getgenv().Settings.Smoothness,
-                MousePos.Y + (TargetPos.Y - MousePos.Y) * getgenv().Settings.Smoothness
-            )
-            mousemoveabs(NewPos.X, NewPos.Y)
+    if Enabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild(BodyPart) then
+            local targetPos = target.Character[BodyPart].Position
+            local currentPos = Camera.CFrame
+            local newCFrame = currentPos:Lerp(CFrame.new(currentPos.Position, targetPos), Smoothness)
+            Camera.CFrame = newCFrame
         end
     end
 end)
