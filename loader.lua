@@ -24,7 +24,7 @@ local function loadScript()
         elseif gameId == 9431156611 then -- Slap Royale
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/SlapBattles/slaproyale.lua"))()
         elseif gameId == 17625359962 then -- Rivals
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/rivals.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Others/rivals.lua"))()
         elseif gameId ==  621129760 then -- KAT
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Others/KAT.lua"))()
         end
