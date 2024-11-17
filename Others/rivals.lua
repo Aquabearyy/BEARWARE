@@ -8,15 +8,49 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
 
 getgenv().SilentAimEnabled = false
-getgenv().ESPEnabled = false
 getgenv().MaxDistance = 1000
 getgenv().FOV = 100
 getgenv().ShowFOV = false
 getgenv().RainbowFOV = false
 getgenv().FOVColor = Color3.fromRGB(255, 255, 255)
 getgenv().FOVThickness = 2
+
+local ESPSettings = {
+    Enabled = false,
+    BoxesEnabled = false,
+    TracersEnabled = false,
+    SkeletonEnabled = false,
+    RainbowBoxes = false,
+    RainbowTracers = false,
+    RainbowSkeleton = false,
+    MouseTracer = false,
+    BoxColor = Color3.fromRGB(255, 0, 0),
+    TracerColor = Color3.fromRGB(255, 0, 0),
+    SkeletonColor = Color3.fromRGB(255, 255, 255),
+    BoxThickness = 1,
+    TracerThickness = 1,
+    SkeletonThickness = 1
+}
+
+local SkeletonPoints = {
+    {"Head", "UpperTorso"},
+    {"UpperTorso", "LowerTorso"},
+    {"LowerTorso", "LeftUpperLeg"},
+    {"LeftUpperLeg", "LeftLowerLeg"},
+    {"LeftLowerLeg", "LeftFoot"},
+    {"LowerTorso", "RightUpperLeg"},
+    {"RightUpperLeg", "RightLowerLeg"},
+    {"RightLowerLeg", "RightFoot"},
+    {"UpperTorso", "LeftUpperArm"},
+    {"LeftUpperArm", "LeftLowerArm"},
+    {"LeftLowerArm", "LeftHand"},
+    {"UpperTorso", "RightUpperArm"},
+    {"RightUpperArm", "RightLowerArm"},
+    {"RightLowerArm", "RightHand"},
+}
 
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = getgenv().FOVThickness
@@ -37,6 +71,118 @@ local Window = OrionLib:MakeWindow({
     SaveConfig = false,
     ConfigFolder = "sxlent404"
 })
+
+local ESPObjects = {}
+
+local function CreateSkeletonLines()
+    local Lines = {}
+    for i = 1, #SkeletonPoints do
+        local Line = Drawing.new("Line")
+        Line.Thickness = ESPSettings.SkeletonThickness
+        Line.Transparency = 1
+        table.insert(Lines, Line)
+    end
+    return Lines
+end
+
+local function CreateESPObjects()
+    local Box = Drawing.new("Square")
+    Box.Thickness = ESPSettings.BoxThickness
+    Box.Filled = false
+    Box.Transparency = 1
+    
+    local Tracer = Drawing.new("Line")
+    Tracer.Thickness = ESPSettings.TracerThickness
+    Tracer.Transparency = 1
+    
+    local SkeletonLines = CreateSkeletonLines()
+    
+    return {
+        Box = Box,
+        Tracer = Tracer,
+        Skeleton = SkeletonLines
+    }
+end
+
+local function UpdateESP(player)
+    if not ESPObjects[player] then
+        ESPObjects[player] = CreateESPObjects()
+    end
+    
+    local objects = ESPObjects[player]
+    
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        objects.Box.Visible = false
+        objects.Tracer.Visible = false
+        for _, line in ipairs(objects.Skeleton) do
+            line.Visible = false
+        end
+        return
+    end
+
+    local character = player.Character
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+    
+    if not onScreen then
+        objects.Box.Visible = false
+        objects.Tracer.Visible = false
+        for _, line in ipairs(objects.Skeleton) do
+            line.Visible = false
+        end
+        return
+    end
+
+    if ESPSettings.BoxesEnabled then
+        local rootPos = hrp.Position
+        local boxSize = Vector2.new(4000 / vector.Z, 5000 / vector.Z)
+        objects.Box.Size = boxSize
+        objects.Box.Position = Vector2.new(vector.X - boxSize.X / 2, vector.Y - boxSize.Y / 2)
+        objects.Box.Visible = true
+        objects.Box.Thickness = ESPSettings.BoxThickness
+        objects.Box.Color = ESPSettings.RainbowBoxes and Color3.fromHSV(tick() % 5 / 5, 1, 1) or ESPSettings.BoxColor
+    else
+        objects.Box.Visible = false
+    end
+
+    if ESPSettings.TracersEnabled then
+        objects.Tracer.From = ESPSettings.MouseTracer and UserInputService:GetMouseLocation() or Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+        objects.Tracer.To = Vector2.new(vector.X, vector.Y)
+        objects.Tracer.Visible = true
+        objects.Tracer.Thickness = ESPSettings.TracerThickness
+        objects.Tracer.Color = ESPSettings.RainbowTracers and Color3.fromHSV(tick() % 5 / 5, 1, 1) or ESPSettings.TracerColor
+    else
+        objects.Tracer.Visible = false
+    end
+
+    if ESPSettings.SkeletonEnabled then
+        for i, point in ipairs(SkeletonPoints) do
+            local p1 = character:FindFirstChild(point[1])
+            local p2 = character:FindFirstChild(point[2])
+            
+            if p1 and p2 then
+                local p1_pos, p1_visible = Camera:WorldToViewportPoint(p1.Position)
+                local p2_pos, p2_visible = Camera:WorldToViewportPoint(p2.Position)
+                
+                if p1_visible and p2_visible then
+                    objects.Skeleton[i].From = Vector2.new(p1_pos.X, p1_pos.Y)
+                    objects.Skeleton[i].To = Vector2.new(p2_pos.X, p2_pos.Y)
+                    objects.Skeleton[i].Thickness = ESPSettings.SkeletonThickness
+                    objects.Skeleton[i].Visible = true
+                    objects.Skeleton[i].Color = ESPSettings.RainbowSkeleton and Color3.fromHSV(tick() % 5 / 5, 1, 1) or ESPSettings.SkeletonColor
+                else
+                    objects.Skeleton[i].Visible = false
+                end
+            else
+                objects.Skeleton[i].Visible = false
+            end
+        end
+    else
+        for _, line in ipairs(objects.Skeleton) do
+            line.Visible = false
+        end
+    end
+end
 
 local function IsVisible(target)
     if not target or not target:FindFirstChild("Head") then return false end
@@ -70,36 +216,6 @@ local function GetClosestPlayer()
         end
     end
     return Target
-end
-
-local function ApplyESP(plr)
-    if not plr.Character then return end
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "SilentHighlight"
-    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.OutlineTransparency = 0
-    highlight.Parent = plr.Character
-end
-
-local function RefreshESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            if player.Character then
-                local highlight = player.Character:FindFirstChild("SilentHighlight")
-                if getgenv().ESPEnabled then
-                    if not highlight then
-                        ApplyESP(player)
-                    end
-                else
-                    if highlight then
-                        highlight:Destroy()
-                    end
-                end
-            end
-        end
-    end
 end
 
 local function UpdateFOVCircle()
@@ -187,12 +303,132 @@ mainTab:AddColorpicker({
     end
 })
 
-ESPTab:AddToggle({
-    Name = "Player ESP",
+local ESPSection = ESPTab:AddSection({Name = "ESP Settings"})
+local BoxSection = ESPTab:AddSection({Name = "Box ESP"})
+local TracerSection = ESPTab:AddSection({Name = "Tracer ESP"})
+local SkeletonSection = ESPTab:AddSection({Name = "Skeleton ESP"})
+
+ESPSection:AddToggle({
+    Name = "ESP Enabled",
     Default = false,
     Callback = function(Value)
-        getgenv().ESPEnabled = Value
-        RefreshESP()
+        ESPSettings.Enabled = Value
+    end
+})
+
+BoxSection:AddToggle({
+    Name = "Box ESP",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.BoxesEnabled = Value
+    end
+})
+
+BoxSection:AddToggle({
+    Name = "Rainbow Boxes",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.RainbowBoxes = Value
+    end
+})
+
+BoxSection:AddColorpicker({
+    Name = "Box Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Callback = function(Value)
+        ESPSettings.BoxColor = Value
+    end
+})
+
+BoxSection:AddSlider({
+    Name = "Box Thickness",
+    Min = 1,
+    Max = 5,
+    Default = 1,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    Callback = function(Value)
+        ESPSettings.BoxThickness = Value
+    end
+})
+
+TracerSection:AddToggle({
+    Name = "Tracer ESP",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.TracersEnabled = Value
+    end
+})
+
+TracerSection:AddToggle({
+    Name = "Mouse Tracers",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.MouseTracer = Value
+    end
+})
+
+TracerSection:AddToggle({
+    Name = "Rainbow Tracers",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.RainbowTracers = Value
+    end
+})
+
+TracerSection:AddColorpicker({
+    Name = "Tracer Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Callback = function(Value)
+        ESPSettings.TracerColor = Value
+    end
+})
+
+TracerSection:AddSlider({
+    Name = "Tracer Thickness",
+    Min = 1,
+    Max = 5,
+    Default = 1,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    Callback = function(Value)
+        ESPSettings.TracerThickness = Value
+    end
+})
+
+SkeletonSection:AddToggle({
+    Name = "Skeleton ESP",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.SkeletonEnabled = Value
+    end
+})
+
+SkeletonSection:AddToggle({
+    Name = "Rainbow Skeleton",
+    Default = false,
+    Callback = function(Value)
+        ESPSettings.RainbowSkeleton = Value
+    end
+})
+
+SkeletonSection:AddColorpicker({
+    Name = "Skeleton Color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value)
+        ESPSettings.SkeletonColor = Value
+    end
+})
+
+SkeletonSection:AddSlider({
+    Name = "Skeleton Thickness",
+    Min = 1,
+    Max = 5,
+    Default = 1,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    Callback = function(Value)
+        ESPSettings.SkeletonThickness = Value
     end
 })
 
@@ -213,26 +449,56 @@ Mouse.Button1Up:Connect(function()
 end)
 
 RunService.RenderStepped:Connect(function()
-    if getgenv().ESPEnabled then
-        RefreshESP()
+    if ESPSettings.Enabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                UpdateESP(player)
+            end
+        end
+    else
+        for _, objects in pairs(ESPObjects) do
+            objects.Box.Visible = false
+            objects.Tracer.Visible = false
+            for _, line in ipairs(objects.Skeleton) do
+                line.Visible = false
+            end
+        end
     end
     UpdateFOVCircle()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-    if player.Character and player.Character:FindFirstChild("SilentHighlight") then
-        player.Character.SilentHighlight:Destroy()
+    if ESPObjects[player] then
+        for _, object in pairs(ESPObjects[player]) do
+            if typeof(object) == "table" then
+                for _, line in ipairs(object) do
+                    line:Remove()
+                end
+            else
+                object:Remove()
+            end
+        end
+        ESPObjects[player] = nil
     end
 end)
 
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function(char)
-        if getgenv().ESPEnabled then
-            ApplyESP(player)
+        if ESPSettings.Enabled then
+            local esp = CreateESPObjects()
+            ESPObjects[player] = esp
         end
         char:WaitForChild("Humanoid").Died:Connect(function()
-            if char:FindFirstChild("SilentHighlight") then
-                char.SilentHighlight:Destroy()
+            if ESPObjects[player] then
+                for _, object in pairs(ESPObjects[player]) do
+                    if typeof(object) == "table" then
+                        for _, line in ipairs(object) do
+                            line.Visible = false
+                        end
+                    else
+                        object.Visible = false
+                    end
+                end
             end
         end)
     end)
