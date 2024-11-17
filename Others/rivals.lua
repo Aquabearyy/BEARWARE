@@ -10,14 +10,23 @@ local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
 getgenv().SilentAimEnabled = false
-getgenv().AimbotEnabled = false
 getgenv().ESPEnabled = false
-getgenv().AutoStabEnabled = false
-getgenv().AutoStabKeybind = Enum.KeyCode.X
-getgenv().AutoStabHolding = false
-getgenv().Smoothness = 0.6
 getgenv().MaxDistance = 1000
-getgenv().AimbotActivation = "Right Click"
+getgenv().FOV = 100
+getgenv().ShowFOV = false
+getgenv().RainbowFOV = false
+getgenv().FOVColor = Color3.fromRGB(255, 255, 255)
+getgenv().FOVThickness = 2
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = getgenv().FOVThickness
+FOVCircle.NumSides = 50
+FOVCircle.Radius = getgenv().FOV
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+FOVCircle.ZIndex = 999
+FOVCircle.Transparency = 1
+FOVCircle.Color = getgenv().FOVColor
 
 local Window = OrionLib:MakeWindow({
     IntroText = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
@@ -42,42 +51,31 @@ end
 local function GetClosestPlayer()
     local Target = nil
     local MaxDistance = getgenv().MaxDistance
+    local MaxFOV = getgenv().FOV
+    
     for _, Player in pairs(Players:GetPlayers()) do
         if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") 
             and Player.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
             local Head = Player.Character.Head
             local Distance = (Head.Position - Camera.CFrame.Position).Magnitude
-            if Distance < MaxDistance and IsVisible(Player.Character) then
+            local ScreenPoint = Camera:WorldToViewportPoint(Head.Position)
+            local MousePosition = Vector2.new(Mouse.X, Mouse.Y)
+            local Distance2D = (Vector2.new(ScreenPoint.X, ScreenPoint.Y) - MousePosition).Magnitude
+            
+            if Distance2D <= MaxFOV and Distance < MaxDistance and IsVisible(Player.Character) then
                 Target = Player
                 MaxDistance = Distance
+                MaxFOV = Distance2D
             end
         end
     end
     return Target
 end
 
-local function TeleportBehindPlayer(player, isReturning)
-    if not player or not player.Character or not LocalPlayer.Character then return end
-    local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-    local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not targetRoot or not myRoot then return end
-    if not isReturning then
-        getgenv().OriginalStabPosition = myRoot.CFrame
-        local targetCFrame = targetRoot.CFrame
-        local behindPosition = targetCFrame * CFrame.new(0, 0, 3)
-        myRoot.CFrame = behindPosition
-    else
-        if getgenv().OriginalStabPosition then
-            myRoot.CFrame = getgenv().OriginalStabPosition
-            getgenv().OriginalStabPosition = nil
-        end
-    end
-end
-
 local function ApplyESP(plr)
     if not plr.Character then return end
     local highlight = Instance.new("Highlight")
-    highlight.Name = "Totally_NOT_Esp"
+    highlight.Name = "SilentHighlight"
     highlight.FillColor = Color3.fromRGB(255, 0, 0)
     highlight.FillTransparency = 0.5
     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
@@ -89,7 +87,7 @@ local function RefreshESP()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer then
             if player.Character then
-                local highlight = player.Character:FindFirstChild("Totally_NOT_Esp")
+                local highlight = player.Character:FindFirstChild("SilentHighlight")
                 if getgenv().ESPEnabled then
                     if not highlight then
                         ApplyESP(player)
@@ -104,15 +102,24 @@ local function RefreshESP()
     end
 end
 
+local function UpdateFOVCircle()
+    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
+    FOVCircle.Radius = getgenv().FOV
+    FOVCircle.Visible = getgenv().ShowFOV
+    FOVCircle.Thickness = getgenv().FOVThickness
+    
+    if getgenv().RainbowFOV then
+        local hue = tick() % 5 / 5
+        FOVCircle.Color = Color3.fromHSV(hue, 1, 1)
+    else
+        FOVCircle.Color = getgenv().FOVColor
+    end
+end
+
 local mainTab = Window:MakeTab({
     Name = "Main",
     Icon = "rbxassetid://4483345998",
     PremiumOnly = false
-})
-
-local AimbotTab = Window:MakeTab({
-    Name = "Aimbot",
-    Icon = "rbxassetid://4483345998"
 })
 
 local ESPTab = Window:MakeTab({
@@ -120,9 +127,7 @@ local ESPTab = Window:MakeTab({
     Icon = "rbxassetid://4483345998"
 })
 
-AimbotTab:AddLabel("Aimbots Possibly Detected!")
-
-AimbotTab:AddToggle({
+mainTab:AddToggle({
     Name = "Silent Aim",
     Default = false,
     Callback = function(Value)
@@ -130,62 +135,55 @@ AimbotTab:AddToggle({
     end
 })
 
-AimbotTab:AddToggle({
-    Name = "Aimbot",
+mainTab:AddToggle({
+    Name = "Show FOV",
     Default = false,
     Callback = function(Value)
-        getgenv().AimbotEnabled = Value
+        getgenv().ShowFOV = Value
+        FOVCircle.Visible = Value
     end
 })
 
 mainTab:AddToggle({
-    Name = "Auto-Stab",
+    Name = "Rainbow FOV",
     Default = false,
     Callback = function(Value)
-        getgenv().AutoStabEnabled = Value
+        getgenv().RainbowFOV = Value
     end
 })
 
-mainTab:AddBind({
-    Name = "Auto-Stab Keybind",
-    Default = Enum.KeyCode.X,
-    Hold = true,
-    Callback = function(Started)
-        if getgenv().AutoStabEnabled then
-            getgenv().AutoStabHolding = Started
-            if Started then
-                while getgenv().AutoStabHolding do
-                    local Target = GetClosestPlayer()
-                    if Target then
-                        TeleportBehindPlayer(Target, false)
-                    end
-                    task.wait()
-                end
-            else
-                TeleportBehindPlayer(nil, true)
-            end
-        end
-    end
-})
-
-AimbotTab:AddDropdown({
-    Name = "Aimbot Activation",
-    Default = "Right Click",
-    Options = {"Right Click", "Left Click", "Both"},
+mainTab:AddSlider({
+    Name = "FOV",
+    Min = 30,
+    Max = 900,
+    Default = 100,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
     Callback = function(Value)
-        getgenv().AimbotActivation = Value
-    end
+        getgenv().FOV = Value
+        FOVCircle.Radius = Value
+    end    
 })
 
-AimbotTab:AddSlider({
-    Name = "Aimbot Smoothness",
-    Min = 0.1,
-    Max = 1,
-    Default = 0.6,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 0.1,
+mainTab:AddSlider({
+    Name = "FOV Thickness",
+    Min = 1,
+    Max = 10,
+    Default = 2,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 1,
     Callback = function(Value)
-        getgenv().Smoothness = Value
+        getgenv().FOVThickness = Value
+        FOVCircle.Thickness = Value
+    end    
+})
+
+mainTab:AddColorpicker({
+    Name = "FOV Color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value)
+        getgenv().FOVColor = Value
+        FOVCircle.Color = Value
     end
 })
 
@@ -198,8 +196,6 @@ ESPTab:AddToggle({
     end
 })
 
-local AimbotActive = false
-
 Mouse.Button1Down:Connect(function()
     if getgenv().SilentAimEnabled then
         local Target = GetClosestPlayer()
@@ -208,60 +204,24 @@ Mouse.Button1Down:Connect(function()
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
         end
     end
-    if getgenv().AimbotEnabled and (getgenv().AimbotActivation == "Left Click" or getgenv().AimbotActivation == "Both") then
-        AimbotActive = true
-    end
 end)
 
 Mouse.Button1Up:Connect(function()
     if getgenv().SilentAimEnabled and getgenv().OriginalCFrame then
         Camera.CFrame = getgenv().OriginalCFrame
     end
-    if getgenv().AimbotActivation == "Left Click" or getgenv().AimbotActivation == "Both" then
-        AimbotActive = false
-    end
-end)
-
-Mouse.Button2Down:Connect(function()
-    if getgenv().AimbotEnabled and (getgenv().AimbotActivation == "Right Click" or getgenv().AimbotActivation == "Both") then
-        AimbotActive = true
-    end
-end)
-
-Mouse.Button2Up:Connect(function()
-    if getgenv().AimbotActivation == "Right Click" or getgenv().AimbotActivation == "Both" then
-        AimbotActive = false
-    end
 end)
 
 RunService.RenderStepped:Connect(function()
-    if AimbotActive and getgenv().AimbotEnabled then
-        local Target = GetClosestPlayer()
-        if Target and Target.Character and Target.Character:FindFirstChild("Head") then
-            local TargetPos = Target.Character.Head.Position
-            local TargetCFrame = CFrame.new(Camera.CFrame.Position, TargetPos)
-            Camera.CFrame = Camera.CFrame:Lerp(TargetCFrame, getgenv().Smoothness)
-        end
-    end
-    if getgenv().AutoStabHolding and getgenv().AutoStabEnabled then
-        local Target = GetClosestPlayer()
-        if Target then
-            TeleportBehindPlayer(Target, false)
-        else
-            TeleportBehindPlayer(nil, true)
-        end
-    end
     if getgenv().ESPEnabled then
         RefreshESP()
     end
+    UpdateFOVCircle()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-    if player.Character and player.Character:FindFirstChild("Totally_NOT_Esp") then
-        player.Character.Totally_NOT_Esp:Destroy()
-    end
-    if getgenv().AutoStabHolding and getgenv().OriginalStabPosition then
-        TeleportBehindPlayer(nil, true)
+    if player.Character and player.Character:FindFirstChild("SilentHighlight") then
+        player.Character.SilentHighlight:Destroy()
     end
 end)
 
@@ -271,14 +231,8 @@ Players.PlayerAdded:Connect(function(player)
             ApplyESP(player)
         end
         char:WaitForChild("Humanoid").Died:Connect(function()
-            if getgenv().AutoStabHolding and getgenv().OriginalStabPosition then
-                local currentTarget = GetClosestPlayer()
-                if not currentTarget then
-                    TeleportBehindPlayer(nil, true)
-                end
-            end
-            if char:FindFirstChild("Totally_NOT_Esp") then
-                char.Totally_NOT_Esp:Destroy()
+            if char:FindFirstChild("SilentHighlight") then
+                char.SilentHighlight:Destroy()
             end
         end)
     end)
