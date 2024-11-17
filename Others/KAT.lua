@@ -63,6 +63,18 @@ MainTab:AddToggle({
     end    
 })
 
+--[[
+
+ █████  ██ ███    ███ ██████   ██████  ████████     ████████  █████  ██████  
+██   ██ ██ ████  ████ ██   ██ ██    ██    ██           ██    ██   ██ ██   ██ 
+███████ ██ ██ ████ ██ ██████  ██    ██    ██           ██    ███████ ██████  
+██   ██ ██ ██  ██  ██ ██   ██ ██    ██    ██           ██    ██   ██ ██   ██ 
+██   ██ ██ ██      ██ ██████   ██████     ██           ██    ██   ██ ██████  
+
+]]
+
+AimbotTab:AddLabel("Go in First Person or Shiftlock for Aimbot to work!")
+
 local Enabled = false
 local Smoothness = 0.5
 local BodyPart = "HumanoidRootPart"
