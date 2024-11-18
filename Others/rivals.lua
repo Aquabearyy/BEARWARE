@@ -11,6 +11,7 @@ local Camera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
 
 getgenv().SilentAimEnabled = false
+getgenv().SilentAimHitChance = 100
 getgenv().MaxDistance = 1000
 getgenv().FOV = 100
 getgenv().ShowFOV = false
@@ -243,7 +244,11 @@ local ESPTab = Window:MakeTab({
     Icon = "rbxassetid://4483345998"
 })
 
-mainTab:AddToggle({
+local AimbotSection = mainTab:AddSection({
+    Name = "Aimbot"
+})
+
+AimbotSection:AddToggle({
     Name = "Silent Aim",
     Default = false,
     Callback = function(Value)
@@ -251,7 +256,24 @@ mainTab:AddToggle({
     end
 })
 
-mainTab:AddToggle({
+AimbotSection:AddSlider({
+    Name = "Hit Chance",
+    Min = 0,
+    Max = 100,
+    Default = 100,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "%",
+    Callback = function(Value)
+        getgenv().SilentAimHitChance = Value
+    end    
+})
+
+local FOVSection = mainTab:AddSection({
+    Name = "FOV Settings"
+})
+
+FOVSection:AddToggle({
     Name = "Show FOV",
     Default = false,
     Callback = function(Value)
@@ -260,7 +282,7 @@ mainTab:AddToggle({
     end
 })
 
-mainTab:AddToggle({
+FOVSection:AddToggle({
     Name = "Rainbow FOV",
     Default = false,
     Callback = function(Value)
@@ -268,8 +290,8 @@ mainTab:AddToggle({
     end
 })
 
-mainTab:AddSlider({
-    Name = "FOV",
+FOVSection:AddSlider({
+    Name = "FOV Size",
     Min = 30,
     Max = 900,
     Default = 100,
@@ -281,7 +303,7 @@ mainTab:AddSlider({
     end    
 })
 
-mainTab:AddSlider({
+FOVSection:AddSlider({
     Name = "FOV Thickness",
     Min = 1,
     Max = 10,
@@ -294,7 +316,7 @@ mainTab:AddSlider({
     end    
 })
 
-mainTab:AddColorpicker({
+FOVSection:AddColorpicker({
     Name = "FOV Color",
     Default = Color3.fromRGB(255, 255, 255),
     Callback = function(Value)
@@ -434,10 +456,12 @@ SkeletonSection:AddSlider({
 
 Mouse.Button1Down:Connect(function()
     if getgenv().SilentAimEnabled then
-        local Target = GetClosestPlayer()
-        if Target and Target.Character and Target.Character:FindFirstChild("Head") then
-            getgenv().OriginalCFrame = Camera.CFrame
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
+        if math.random(0, 100) <= getgenv().SilentAimHitChance then
+            local Target = GetClosestPlayer()
+            if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+                getgenv().OriginalCFrame = Camera.CFrame
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
+            end
         end
     end
 end)
