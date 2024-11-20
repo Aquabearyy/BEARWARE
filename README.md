@@ -10,7 +10,7 @@ Simple and powerful hub for popular Roblox games.
 
 ## Usage
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/Loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/loader.lua"))()
 ```
 
 ## Features
