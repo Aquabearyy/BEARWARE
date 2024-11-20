@@ -25,13 +25,13 @@ end
 local function loadScript()
     local success, result = pcall(function()
         if gameId == 6403373529 then 
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/SlapBattles/slapbattles.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/SlapBattles/slapbattles.lua"))()
         elseif gameId == 9431156611 then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/SlapBattles/slaproyale.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/SlapBattles/slaproyale.lua"))()
         elseif gameId == 17625359962 then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/rivals.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/Others/rivals.lua"))()
         elseif gameId == 621129760 then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Others/KAT.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/heads/main/Others/KAT.lua"))()
         end
     end)
     
