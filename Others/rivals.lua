@@ -26,12 +26,16 @@ local Settings = {
     FOVThickness = 2,
     
     HighlightESP = false,
+    HealthESP = false,
     HighlightColor = Color3.fromRGB(255, 0, 0),
     OutlineColor = Color3.fromRGB(255, 255, 255),
+    FillTransparency = 0.5,
+    OutlineTransparency = 0,
     
     CFSpeed = false,
     SpeedValue = 1,
-    InfJump = false
+    InfJump = false,
+    NoClip = false
 }
 
 local Highlights = {}
@@ -45,6 +49,77 @@ FOVCircle.ZIndex = 999
 FOVCircle.Transparency = 1
 FOVCircle.Color = Settings.FOVColor
 
+local function AddHealthESP(character)
+    if not character or character == LocalPlayer.Character then return end
+    local head = character:WaitForChild("Head")
+    if head:FindFirstChild("HealthBar") then return end
+    
+    local healthBar = Instance.new("BillboardGui")
+    healthBar.Name = "HealthBar"
+    healthBar.Adornee = head
+    healthBar.Size = UDim2.new(2, 0, 0.8, 0)
+    healthBar.StudsOffset = Vector3.new(0, 2, 0)
+    healthBar.AlwaysOnTop = true
+    healthBar.Parent = head
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Size = UDim2.new(1, 0, 1, 0)
+    mainFrame.Parent = healthBar
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0.2, 0)
+    mainCorner.Parent = mainFrame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(50, 50, 50)
+    stroke.Thickness = 1
+    stroke.Parent = mainFrame
+    
+    local paddingFrame = Instance.new("Frame")
+    paddingFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    paddingFrame.BorderSizePixel = 0
+    paddingFrame.Size = UDim2.new(0.95, 0, 0.8, 0)
+    paddingFrame.Position = UDim2.new(0.025, 0, 0.1, 0)
+    paddingFrame.Parent = mainFrame
+    
+    local healthFill = Instance.new("Frame")
+    healthFill.Name = "HealthFill"
+    healthFill.BorderSizePixel = 0
+    healthFill.Size = UDim2.new(1, 0, 1, 0)
+    healthFill.Parent = paddingFrame
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0.2, 0)
+    fillCorner.Parent = paddingFrame
+    
+    local innerCorner = Instance.new("UICorner")
+    innerCorner.CornerRadius = UDim.new(0.2, 0)
+    innerCorner.Parent = healthFill
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = 90
+    gradient.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 0.2)
+    })
+    gradient.Parent = healthFill
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        task.spawn(function()
+            while healthBar.Parent do
+                local healthPercent = humanoid.Health / humanoid.MaxHealth
+                local r, g = math.min(2 - 2 * healthPercent, 1), math.min(2 * healthPercent, 1)
+                healthFill.BackgroundColor3 = Color3.fromRGB(r * 255, g * 255, 0)
+                healthFill.Size = UDim2.new(healthPercent, 0, 1, 0)
+                task.wait()
+            end
+        end)
+    end
+end
+
 local Window = Library:CreateWindow({
     Title = 'Silent Hub - Rivals | ' .. identifyexecutor(),
     Center = true,
@@ -57,6 +132,8 @@ local Tabs = {
 }
 
 local AimbotGroup = Tabs.Main:AddLeftGroupbox('Silent Aim')
+local ESPGroup = Tabs.Main:AddRightGroupbox('ESP')
+local MovementGroup = Tabs.Main:AddLeftGroupbox('Movement')
 
 AimbotGroup:AddToggle('AimbotEnabled', {
     Text = 'Silent Aim',
@@ -136,8 +213,6 @@ AimbotGroup:AddLabel('Toggle Key'):AddKeyPicker('SilentAimKeybind', {
     end
 })
 
-local ESPGroup = Tabs.Main:AddRightGroupbox('ESP')
-
 ESPGroup:AddToggle('HighlightESP', {
     Text = 'Highlight ESP',
     Default = false,
@@ -148,6 +223,22 @@ ESPGroup:AddToggle('HighlightESP', {
                 highlight:Destroy()
             end
             Highlights = {}
+        end
+    end
+})
+
+ESPGroup:AddToggle('HealthESP', {
+    Text = 'Health ESP',
+    Default = false,
+    Callback = function(Value)
+        Settings.HealthESP = Value
+        if not Value then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("Head") and 
+                   player.Character.Head:FindFirstChild("HealthBar") then
+                    player.Character.Head.HealthBar:Destroy()
+                end
+            end
         end
     end
 })
@@ -172,7 +263,49 @@ ESPGroup:AddLabel('Outline Color'):AddColorPicker('OutlineColor', {
     end
 })
 
-local MovementGroup = Tabs.Main:AddLeftGroupbox('Movement')
+ESPGroup:AddLabel('ESP Key'):AddKeyPicker('ESPKeybind', {
+    Default = 'X',
+    NoUI = false,
+    Text = 'ESP Toggle',
+    Callback = function(Value)
+        Settings.HighlightESP = not Settings.HighlightESP
+        Toggles.HighlightESP:SetValue(Settings.HighlightESP)
+        if not Settings.HighlightESP then
+            for _, highlight in pairs(Highlights) do
+                highlight:Destroy()
+            end
+            Highlights = {}
+        end
+    end
+})
+
+ESPGroup:AddSlider('HighlightTransparency', {
+    Text = 'Fill Transparency',
+    Default = 0.5,
+    Min = 0,
+    Max = 1,
+    Rounding = 2,
+    Callback = function(Value)
+        Settings.FillTransparency = Value
+        for _, highlight in pairs(Highlights) do
+            highlight.FillTransparency = Value
+        end
+    end
+})
+
+ESPGroup:AddSlider('OutlineTransparency', {
+    Text = 'Outline Transparency',
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 2,
+    Callback = function(Value)
+        Settings.OutlineTransparency = Value
+        for _, highlight in pairs(Highlights) do
+            highlight.OutlineTransparency = Value
+        end
+    end
+})
 
 MovementGroup:AddToggle('CFSpeed', {
     Text = 'CFrame Speed',
@@ -204,6 +337,25 @@ MovementGroup:AddToggle('InfJump', {
     end
 })
 
+MovementGroup:AddToggle('NoClip', {
+    Text = 'NoClip',
+    Default = false,
+    Tooltip = 'Walk through walls',
+    Callback = function(Value)
+        Settings.NoClip = Value
+    end
+})
+
+MovementGroup:AddLabel('NoClip Key'):AddKeyPicker('NoClipKeybind', {
+    Default = 'Z',
+    NoUI = false,
+    Text = 'NoClip Toggle',
+    Callback = function(Value)
+        Settings.NoClip = not Settings.NoClip
+        Toggles.NoClip:SetValue(Settings.NoClip)
+    end
+})
+
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 
 MenuGroup:AddButton('Unload', function() 
@@ -218,7 +370,7 @@ MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', {
 
 MenuGroup:AddToggle('KeybindFrame', {
     Text = 'Show Keybind Frame',
-    Default = true,
+    Default = false,
     Callback = function(Value)
         Library.KeybindFrame.Visible = Value
     end
@@ -226,7 +378,7 @@ MenuGroup:AddToggle('KeybindFrame', {
 
 MenuGroup:AddToggle('QueueTeleport', {
     Text = 'Queue On Teleport',
-    Default = true,
+    Default = false,
     Callback = function(Value)
         if Value then
             syn.queue_on_teleport([[
@@ -261,6 +413,14 @@ local FrameCounter = 0
 local FPS = 60
 
 RunService.Heartbeat:Connect(function()
+    if Settings.NoClip and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+
     if Settings.CFSpeed then
         local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
@@ -289,10 +449,13 @@ RunService.Heartbeat:Connect(function()
                         local Highlight = Instance.new("Highlight")
                         Highlight.FillColor = Settings.HighlightColor
                         Highlight.OutlineColor = Settings.OutlineColor
-                        Highlight.FillTransparency = 0.5
-                        Highlight.OutlineTransparency = 0
+                        Highlight.FillTransparency = Settings.FillTransparency
+                        Highlight.OutlineTransparency = Settings.OutlineTransparency
                         Highlight.Parent = Player.Character
                         Highlights[Player] = Highlight
+                    end
+                    if Settings.HealthESP and not Player.Character.Head:FindFirstChild("HealthBar") then
+                        AddHealthESP(Player.Character)
                     end
                 end
             end
@@ -345,6 +508,8 @@ Players.PlayerRemoving:Connect(function(player)
         Highlights[player] = nil
     end
 end)
+
+Library:Notify('Check UI Settings tab for themes and configs!', 15)
 
 Library.ToggleKeybind = Options.MenuKeybind
 
