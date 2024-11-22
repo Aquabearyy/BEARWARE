@@ -25,6 +25,8 @@ local Settings = {
     RainbowFOV = false,
     FOVColor = Color3.fromRGB(255, 255, 255),
     FOVThickness = 2,
+    AimType = "Aimbot",
+    Sensitivity = 0.2,
     
     -- ESP Settings
     HighlightESP = false,
@@ -207,15 +209,16 @@ AimbotGroup:AddSlider('AimbotHitChance', {
     end
 })
 
-AimbotGroup:AddLabel('Toggle Key'):AddKeyPicker('SilentAimKeybind', {
-    Default = 'V',
-    NoUI = false,
-    Text = 'Silent Aim Toggle',
+AimbotGroup:AddDropdown('AimType', {
+    Values = {'Silent Aim', 'Aimbot'},
+    Default = 'Silent Aim',
+    Multi = false,
+    Text = 'Aim Type',
+    Tooltip = 'Choose between Silent Aim and regular Aimbot',
     Callback = function(Value)
-        Settings.AimbotEnabled = not Settings.AimbotEnabled
-        Toggles.AimbotEnabled:SetValue(Settings.AimbotEnabled)
+        Settings.AimType = Value
     end
-})
+ })
 
 ESPGroup:AddToggle('HighlightESP', {
     Text = 'Highlight ESP',
@@ -267,22 +270,6 @@ ESPGroup:AddLabel('Outline Color'):AddColorPicker('OutlineColor', {
     end
 })
 
-ESPGroup:AddLabel('ESP Key'):AddKeyPicker('ESPKeybind', {
-    Default = 'X',
-    NoUI = false,
-    Text = 'ESP Toggle',
-    Callback = function(Value)
-        Settings.HighlightESP = not Settings.HighlightESP
-        Toggles.HighlightESP:SetValue(Settings.HighlightESP)
-        if not Settings.HighlightESP then
-            for _, highlight in pairs(Highlights) do
-                highlight:Destroy()
-            end
-            Highlights = {}
-        end
-    end
-})
-
 ESPGroup:AddSlider('HighlightTransparency', {
     Text = 'Fill Transparency',
     Default = 0.5,
@@ -320,16 +307,6 @@ MovementGroup:AddToggle('CFSpeed', {
     end
 })
 
-MovementGroup:AddLabel('CFrame Speed Key'):AddKeyPicker('CFSpeedKeybind', {
-    Default = 'K',
-    NoUI = false,
-    Text = 'CFrame Speed Toggle',
-    Callback = function(Value)
-        Settings.CFSpeed = not Settings.CFSpeed
-        Toggles.CFSpeed:SetValue(Settings.CFSpeed)
-    end
-})
-
 MovementGroup:AddSlider('SpeedValue', {
     Text = 'Speed Value',
     Default = 1,
@@ -351,32 +328,12 @@ MovementGroup:AddToggle('InfJump', {
     end
 })
 
-MovementGroup:AddLabel('Infinite Jump Key'):AddKeyPicker('InfJumpKeybind', {
-    Default = 'J',
-    NoUI = false,
-    Text = 'Infinite Jump Toggle',
-    Callback = function(Value)
-        Settings.InfJump = not Settings.InfJump
-        Toggles.InfJump:SetValue(Settings.InfJump)
-    end
-})
-
 MovementGroup:AddToggle('NoClip', {
     Text = 'NoClip',
     Default = false,
     Tooltip = 'Walk through walls',
     Callback = function(Value)
         Settings.NoClip = Value
-    end
-})
-
-MovementGroup:AddLabel('NoClip Key'):AddKeyPicker('NoClipKeybind', {
-    Default = 'Z',
-    NoUI = false,
-    Text = 'NoClip Toggle',
-    Callback = function(Value)
-        Settings.NoClip = not Settings.NoClip
-        Toggles.NoClip:SetValue(Settings.NoClip)
     end
 })
 
@@ -502,23 +459,58 @@ RunService.Heartbeat:Connect(function()
     end
  end)
 
-Mouse.Button1Down:Connect(function()
-    if Settings.AimbotEnabled then
-        if math.random(0, 100) <= Settings.AimbotHitChance then
-            local Target = GetClosestPlayer()
-            if Target and Target.Character and Target.Character:FindFirstChild("Head") then
-                Settings.OriginalCFrame = Camera.CFrame
-                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
-            end
-        end
+-- Add this slider to your AimbotGroup
+AimbotGroup:AddSlider('Sensitivity', {
+    Text = 'Aimbot Sensitivity',
+    Default = 0.2,
+    Min = 0.1,
+    Max = 1,
+    Rounding = 2,
+    Callback = function(Value)
+        Settings.Sensitivity = Value
     end
-end)
+ })
 
-Mouse.Button1Up:Connect(function()
-    if Settings.AimbotEnabled and Settings.OriginalCFrame then
-        Camera.CFrame = Settings.OriginalCFrame
-    end
-end)
+ 
+ local IsHolding = false
+
+ Mouse.Button1Down:Connect(function()
+     if not Settings.AimbotEnabled then return end
+     
+     if Settings.AimType == "Silent Aim" then
+         -- Silent aim - instant snap and return
+         if math.random(0, 100) <= Settings.AimbotHitChance then
+             local Target = GetClosestPlayer()
+             if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+                 local oldCFrame = Camera.CFrame
+                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
+                 task.wait()
+                 Camera.CFrame = oldCFrame
+             end
+         end
+     elseif Settings.AimType == "Aimbot" then
+         -- Regular aimbot - smooth tracking while holding
+         IsHolding = true
+         task.spawn(function()
+             while IsHolding and Settings.AimbotEnabled do
+                 local Target = GetClosestPlayer()
+                 if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+                     Camera.CFrame = Camera.CFrame:Lerp(
+                         CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position), 
+                         Settings.Sensitivity
+                     )
+                 end
+                 task.wait()
+             end
+         end)
+     end
+ end)
+ 
+ Mouse.Button1Up:Connect(function()
+     IsHolding = false
+ end)
+
+AimbotGroup:AddLabel('Aimbot stuff is in work!', true)
 
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Space then
