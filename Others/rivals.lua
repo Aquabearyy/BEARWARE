@@ -16,6 +16,7 @@ local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
 local Settings = {
+    -- Aimbot Settings
     AimbotEnabled = false,
     AimbotHitChance = 100,
     MaxDistance = 1000,
@@ -25,6 +26,7 @@ local Settings = {
     FOVColor = Color3.fromRGB(255, 255, 255),
     FOVThickness = 2,
     
+    -- ESP Settings
     HighlightESP = false,
     HealthESP = false,
     HighlightColor = Color3.fromRGB(255, 0, 0),
@@ -32,10 +34,12 @@ local Settings = {
     FillTransparency = 0.5,
     OutlineTransparency = 0,
     
+    -- Movement Settings
     CFSpeed = false,
     SpeedValue = 1,
     InfJump = false,
-    NoClip = false
+    NoClip = false,
+    CFrameWalkSpeed = 0.2
 }
 
 local Highlights = {}
@@ -316,6 +320,16 @@ MovementGroup:AddToggle('CFSpeed', {
     end
 })
 
+MovementGroup:AddLabel('CFrame Speed Key'):AddKeyPicker('CFSpeedKeybind', {
+    Default = 'K',
+    NoUI = false,
+    Text = 'CFrame Speed Toggle',
+    Callback = function(Value)
+        Settings.CFSpeed = not Settings.CFSpeed
+        Toggles.CFSpeed:SetValue(Settings.CFSpeed)
+    end
+})
+
 MovementGroup:AddSlider('SpeedValue', {
     Text = 'Speed Value',
     Default = 1,
@@ -334,6 +348,16 @@ MovementGroup:AddToggle('InfJump', {
     Tooltip = 'Enables infinite jumping',
     Callback = function(Value)
         Settings.InfJump = Value
+    end
+})
+
+MovementGroup:AddLabel('Infinite Jump Key'):AddKeyPicker('InfJumpKeybind', {
+    Default = 'J',
+    NoUI = false,
+    Text = 'Infinite Jump Toggle',
+    Callback = function(Value)
+        Settings.InfJump = not Settings.InfJump
+        Toggles.InfJump:SetValue(Settings.InfJump)
     end
 })
 
@@ -420,7 +444,7 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
-
+ 
     if Settings.CFSpeed then
         local character = LocalPlayer.Character
         if character and character:FindFirstChild("HumanoidRootPart") then
@@ -431,7 +455,7 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
-
+ 
     if Settings.ShowFOV then
         FOVCircle.Position = UserInputService:GetMouseLocation()
         if Settings.RainbowFOV then
@@ -440,30 +464,9 @@ RunService.Heartbeat:Connect(function()
             FOVCircle.Color = Settings.FOVColor
         end
     end
-
-    if Settings.HighlightESP then
-        for _, Player in pairs(Players:GetPlayers()) do
-            if Player ~= LocalPlayer then
-                if Player.Character then
-                    if not Highlights[Player] then
-                        local Highlight = Instance.new("Highlight")
-                        Highlight.FillColor = Settings.HighlightColor
-                        Highlight.OutlineColor = Settings.OutlineColor
-                        Highlight.FillTransparency = Settings.FillTransparency
-                        Highlight.OutlineTransparency = Settings.OutlineTransparency
-                        Highlight.Parent = Player.Character
-                        Highlights[Player] = Highlight
-                    end
-                    if Settings.HealthESP and not Player.Character.Head:FindFirstChild("HealthBar") then
-                        AddHealthESP(Player.Character)
-                    end
-                end
-            end
-        end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
+ end)
+ 
+ RunService.RenderStepped:Connect(function()
     FrameCounter = FrameCounter + 1
     if (tick() - FrameTimer) >= 1 then
         FPS = FrameCounter
@@ -471,7 +474,33 @@ RunService.RenderStepped:Connect(function()
         FrameCounter = 0
     end
     Library:SetWatermark(('Silent Hub | %s fps'):format(math.floor(FPS)))
-end)
+    
+    if Settings.HighlightESP then
+        for _, Player in pairs(Players:GetPlayers()) do
+            if Player ~= LocalPlayer then
+                if Player.Character and not Player.Character:FindFirstChild("Totally_NOT_Esp") then
+                    local Highlight = Instance.new("Highlight") 
+                    Highlight.Name = "Totally_NOT_Esp"
+                    Highlight.FillColor = Settings.HighlightColor
+                    Highlight.OutlineColor = Settings.OutlineColor
+                    Highlight.FillTransparency = Settings.FillTransparency
+                    Highlight.OutlineTransparency = Settings.OutlineTransparency
+                    Highlight.Parent = Player.Character
+                    Highlights[Player] = Highlight
+ 
+                    if Settings.HealthESP then
+                        AddHealthESP(Player.Character)
+                    end
+                end
+            end
+        end
+    else
+        for _, highlight in pairs(Highlights) do
+            highlight:Destroy()
+        end
+        table.clear(Highlights)
+    end
+ end)
 
 Mouse.Button1Down:Connect(function()
     if Settings.AimbotEnabled then
@@ -509,7 +538,7 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-Library:Notify('Check UI Settings tab for themes and configs!', 15)
+ESPGroup:AddLabel('Check UI Settings tab for themes and configs!', true)
 
 Library.ToggleKeybind = Options.MenuKeybind
 
