@@ -25,8 +25,6 @@ local Settings = {
     RainbowFOV = false,
     FOVColor = Color3.fromRGB(255, 255, 255),
     FOVThickness = 2,
-    AimType = "Aimbot",
-    Sensitivity = 0.2,
     
     -- ESP Settings
     HighlightESP = false,
@@ -208,17 +206,6 @@ AimbotGroup:AddSlider('AimbotHitChance', {
         Settings.AimbotHitChance = Value
     end
 })
-
-AimbotGroup:AddDropdown('AimType', {
-    Values = {'Silent Aim', 'Aimbot'},
-    Default = 'Silent Aim',
-    Multi = false,
-    Text = 'Aim Type',
-    Tooltip = 'Choose between Silent Aim and regular Aimbot',
-    Callback = function(Value)
-        Settings.AimType = Value
-    end
- })
 
 ESPGroup:AddToggle('HighlightESP', {
     Text = 'Highlight ESP',
@@ -459,58 +446,23 @@ RunService.Heartbeat:Connect(function()
     end
  end)
 
--- Add this slider to your AimbotGroup
-AimbotGroup:AddSlider('Sensitivity', {
-    Text = 'Aimbot Sensitivity',
-    Default = 0.2,
-    Min = 0.1,
-    Max = 1,
-    Rounding = 2,
-    Callback = function(Value)
-        Settings.Sensitivity = Value
+Mouse.Button1Down:Connect(function()
+    if Settings.AimbotEnabled then
+        if math.random(0, 100) <= Settings.AimbotHitChance then
+            local Target = GetClosestPlayer()
+            if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+                Settings.OriginalCFrame = Camera.CFrame
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
+            end
+        end
     end
- })
+end)
 
- 
- local IsHolding = false
-
- Mouse.Button1Down:Connect(function()
-     if not Settings.AimbotEnabled then return end
-     
-     if Settings.AimType == "Silent Aim" then
-         -- Silent aim - instant snap and return
-         if math.random(0, 100) <= Settings.AimbotHitChance then
-             local Target = GetClosestPlayer()
-             if Target and Target.Character and Target.Character:FindFirstChild("Head") then
-                 local oldCFrame = Camera.CFrame
-                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
-                 task.wait()
-                 Camera.CFrame = oldCFrame
-             end
-         end
-     elseif Settings.AimType == "Aimbot" then
-         -- Regular aimbot - smooth tracking while holding
-         IsHolding = true
-         task.spawn(function()
-             while IsHolding and Settings.AimbotEnabled do
-                 local Target = GetClosestPlayer()
-                 if Target and Target.Character and Target.Character:FindFirstChild("Head") then
-                     Camera.CFrame = Camera.CFrame:Lerp(
-                         CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position), 
-                         Settings.Sensitivity
-                     )
-                 end
-                 task.wait()
-             end
-         end)
-     end
- end)
- 
- Mouse.Button1Up:Connect(function()
-     IsHolding = false
- end)
-
-AimbotGroup:AddLabel('Aimbot stuff is in work!', true)
+Mouse.Button1Up:Connect(function()
+    if Settings.AimbotEnabled and Settings.OriginalCFrame then
+        Camera.CFrame = Settings.OriginalCFrame
+    end
+end)
 
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Space then
