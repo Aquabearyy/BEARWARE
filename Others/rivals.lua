@@ -16,8 +16,8 @@ local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
 local Settings = {
-    -- Aimbot Settings
     AimbotEnabled = false,
+    WallCheck = true,
     AimbotHitChance = 100,
     MaxDistance = 1000,
     FOV = 100,
@@ -25,8 +25,19 @@ local Settings = {
     RainbowFOV = false,
     FOVColor = Color3.fromRGB(255, 255, 255),
     FOVThickness = 2,
+    LockEnabled = false,
+    AliveCheck = true,
+    LockKey = Enum.KeyCode.Q,
+    LockTeamCheck = true,
+    LockHighlight = true,
+    LockHighlightColor = Color3.new(1, 0, 0),
+    LockOutlineColor = Color3.new(1, 1, 1),
+    LockFillTransparency = 0.5,
+    LockOutlineTransparency = 0,
+    LockPart = "Head",
+    LockMaxDistance = 1000,
+    AimbotMode = "Silent",
     
-    -- ESP Settings
     HighlightESP = false,
     HealthESP = false,
     HighlightColor = Color3.fromRGB(255, 0, 0),
@@ -34,7 +45,6 @@ local Settings = {
     FillTransparency = 0.5,
     OutlineTransparency = 0,
     
-    -- Movement Settings
     CFSpeed = false,
     SpeedValue = 1,
     InfJump = false,
@@ -44,6 +54,9 @@ local Settings = {
 
 local Highlights = {}
 local FOVCircle = Drawing.new("Circle")
+local isLocked = false
+local targetPlayer = nil
+local lockHighlight = nil
 FOVCircle.Thickness = Settings.FOVThickness
 FOVCircle.NumSides = 50
 FOVCircle.Radius = Settings.FOV
@@ -124,6 +137,117 @@ local function AddHealthESP(character)
     end
 end
 
+local function wallCheck(target)
+    if not Settings.WallCheck then return true end
+    
+    local character = LocalPlayer.Character
+    if not character or not target.Character then return false end
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {character, target.Character}
+    
+    local origin = character.Head.Position
+    local direction = (target.Character.Head.Position - origin)
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    
+    return result == nil
+end
+
+local function isPlayerAlive(player)
+    if not Settings.AliveCheck then return true end
+    
+    if not player or not player.Character then return false end
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    return humanoid and humanoid.Health > 0
+end
+
+local function createLockHighlight(target)
+    if lockHighlight then
+        lockHighlight:Destroy()
+    end
+
+    lockHighlight = Instance.new("Highlight")
+    lockHighlight.Parent = target.Character
+    lockHighlight.Adornee = target.Character
+    lockHighlight.FillColor = Settings.LockHighlightColor
+    lockHighlight.OutlineColor = Settings.LockOutlineColor
+    lockHighlight.FillTransparency = Settings.LockFillTransparency
+    lockHighlight.OutlineTransparency = Settings.LockOutlineTransparency
+end
+
+local function removeLockHighlight()
+    if lockHighlight then
+        lockHighlight:Destroy()
+        lockHighlight = nil
+    end
+end
+
+local function isOnSameTeam(otherPlayer)
+    if not Settings.LockTeamCheck then return false end
+    if LocalPlayer.Team and otherPlayer.Team then
+        return LocalPlayer.Team == otherPlayer.Team
+    end
+    return false
+end
+
+local function getClosestPlayerForLock()
+    local closestPlayer = nil
+    local shortestDistance = Settings.LockMaxDistance
+
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= LocalPlayer 
+            and isPlayerAlive(otherPlayer) 
+            and wallCheck(otherPlayer)
+            and otherPlayer.Character:FindFirstChild(Settings.LockPart) then
+            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = otherPlayer
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local function unlockCamera()
+    isLocked = false
+    RunService:UnbindFromRenderStep("LockOnPlayer")
+    removeLockHighlight()
+    targetPlayer = nil
+end
+
+local function lockOntoClosestPlayer()
+    if not Settings.LockEnabled then return end
+    
+    targetPlayer = getClosestPlayerForLock()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild(Settings.LockPart) then
+        isLocked = true
+        if Settings.LockHighlight then
+            createLockHighlight(targetPlayer)
+        end
+        
+        RunService:BindToRenderStep("LockOnPlayer", Enum.RenderPriority.Camera.Value + 1, function()
+            if targetPlayer 
+                and isPlayerAlive(targetPlayer) 
+                and wallCheck(targetPlayer)
+                and targetPlayer.Character:FindFirstChild(Settings.LockPart) then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character[Settings.LockPart].Position)
+            else
+                unlockCamera()
+            end
+        end)
+    end
+end
+
+local function isPlayerAlive(player)
+    if not player or not player.Character then return false end
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    return humanoid and humanoid.Health > 0
+end
+
+
 local Window = Library:CreateWindow({
     Title = 'Silent Hub - Rivals | ' .. identifyexecutor(),
     Center = true,
@@ -132,14 +256,17 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab('Main'),
+    Aimbots = Window:AddTab('Aimbots'),
     ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
-local AimbotGroup = Tabs.Main:AddLeftGroupbox('Silent Aim')
 local ESPGroup = Tabs.Main:AddRightGroupbox('ESP')
 local MovementGroup = Tabs.Main:AddLeftGroupbox('Movement')
 
-AimbotGroup:AddToggle('AimbotEnabled', {
+local AimbotGroup = Tabs.Aimbots:AddLeftGroupbox('Silent Aim')
+local LockGroup = Tabs.Aimbots:AddRightGroupbox('Lock Aim')
+
+AimbotGroup:AddToggle('SilentEnabled', {
     Text = 'Silent Aim',
     Default = false,
     Callback = function(Value)
@@ -170,6 +297,7 @@ AimbotGroup:AddSlider('FOVSize', {
     Min = 30,
     Max = 900,
     Rounding = 0,
+    Suffix = ' pixels',
     Callback = function(Value)
         Settings.FOV = Value
         FOVCircle.Radius = Value
@@ -188,6 +316,18 @@ AimbotGroup:AddSlider('FOVThickness', {
     end
 })
 
+AimbotGroup:AddSlider('HitChance', {
+    Text = 'Hit Chance',
+    Default = 100,
+    Min = 0,
+    Max = 100,
+    Rounding = 0,
+    Suffix = '%',
+    Callback = function(Value)
+        Settings.AimbotHitChance = Value
+    end
+})
+
 AimbotGroup:AddLabel('FOV Color'):AddColorPicker('FOVColor', {
     Default = Color3.fromRGB(255, 255, 255),
     Callback = function(Value)
@@ -196,14 +336,130 @@ AimbotGroup:AddLabel('FOV Color'):AddColorPicker('FOVColor', {
     end
 })
 
-AimbotGroup:AddSlider('AimbotHitChance', {
-    Text = 'Hit Chance',
-    Default = 100,
-    Min = 0,
-    Max = 100,
-    Rounding = 0,
+LockGroup:AddToggle('LockEnabled', {
+    Text = 'Lock Aim',
+    Default = false,
     Callback = function(Value)
-        Settings.AimbotHitChance = Value
+        Settings.LockEnabled = Value
+        if not Value then
+            unlockCamera()
+        end
+    end
+})
+
+LockGroup:AddToggle('TeamCheck', {
+    Text = 'Team Check',
+    Default = true,
+    Callback = function(Value)
+        Settings.TeamCheck = Value
+    end
+})
+
+LockGroup:AddToggle('WallCheck', {
+    Text = 'Wall Check',
+    Default = true,
+    Callback = function(Value)
+        Settings.WallCheck = Value
+        if Value and targetPlayer and not wallCheck(targetPlayer) then
+            unlockCamera()
+        end
+    end
+})
+
+LockGroup:AddToggle('AliveCheck', {
+    Text = 'Alive Check',
+    Default = true,
+    Callback = function(Value)
+        Settings.AliveCheck = Value
+        if Value and targetPlayer and not isPlayerAlive(targetPlayer) then
+            unlockCamera()
+        end
+    end
+})
+
+LockGroup:AddToggle('LockHighlight', {
+    Text = 'Highlight Target',
+    Default = true,
+    Callback = function(Value)
+        Settings.LockHighlight = Value
+        if not Value then
+            removeLockHighlight()
+        end
+    end
+})
+
+LockGroup:AddDropdown('LockPart', {
+    Values = {'Head', 'HumanoidRootPart', 'Torso', 'UpperTorso', 'LowerTorso'},
+    Default = 'Head',
+    Multi = false,
+    Text = 'Target Part',
+    Callback = function(Value)
+        Settings.LockPart = Value
+    end
+})
+
+LockGroup:AddLabel('Highlight Color'):AddColorPicker('LockHighlightColor', {
+    Default = Color3.new(1, 0, 0),
+    Callback = function(Value)
+        Settings.LockHighlightColor = Value
+        if lockHighlight then
+            lockHighlight.FillColor = Value
+        end
+    end
+})
+
+LockGroup:AddLabel('Outline Color'):AddColorPicker('LockOutlineColor', {
+    Default = Color3.new(1, 1, 1),
+    Callback = function(Value)
+        Settings.LockOutlineColor = Value
+        if lockHighlight then
+            lockHighlight.OutlineColor = Value
+        end
+    end
+})
+
+LockGroup:AddSlider('HighlightTransparency', {
+    Text = 'Fill Transparency',
+    Default = 0.5,
+    Min = 0,
+    Max = 1,
+    Rounding = 2,
+    Callback = function(Value)
+        Settings.LockFillTransparency = Value
+        if lockHighlight then
+            lockHighlight.FillTransparency = Value
+        end
+    end
+})
+
+LockGroup:AddSlider('OutlineTransparency', {
+    Text = 'Outline Transparency',
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 2,
+    Callback = function(Value)
+        Settings.LockOutlineTransparency = Value
+        if lockHighlight then
+            lockHighlight.OutlineTransparency = Value
+        end
+    end
+})
+
+LockGroup:AddLabel('Lock Key'):AddKeyPicker('LockKeyBind', {
+    Default = 'Q',
+    SyncToggleState = false,
+    Mode = 'Toggle',
+    Text = 'Lock Key',
+    NoUI = false,
+    Callback = function(Value)
+        if Settings.LockEnabled then
+            if isLocked then
+                unlockCamera()
+            else
+                lockOntoClosestPlayer()
+            end
+        end
     end
 })
 
@@ -446,8 +702,10 @@ RunService.Heartbeat:Connect(function()
     end
  end)
 
-Mouse.Button1Down:Connect(function()
-    if Settings.AimbotEnabled then
+ Mouse.Button1Down:Connect(function()
+    if not Settings.AimbotEnabled then return end
+    
+    if Settings.AimbotMode == "Silent" then
         if math.random(0, 100) <= Settings.AimbotHitChance then
             local Target = GetClosestPlayer()
             if Target and Target.Character and Target.Character:FindFirstChild("Head") then
@@ -455,11 +713,16 @@ Mouse.Button1Down:Connect(function()
                 Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
             end
         end
+    elseif Settings.AimbotMode == "Camera" then
+        local Target = GetClosestPlayer()
+        if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Target.Character.Head.Position)
+        end
     end
 end)
 
 Mouse.Button1Up:Connect(function()
-    if Settings.AimbotEnabled and Settings.OriginalCFrame then
+    if Settings.AimbotEnabled and Settings.AimbotMode == "Silent" and Settings.OriginalCFrame then
         Camera.CFrame = Settings.OriginalCFrame
     end
 end)
