@@ -7,17 +7,12 @@ Simple and powerful hub for popular Roblox games.
 - Slap Royale
 - KAT
 - Rivals
+- Fisch
 
 ## Usage
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/loader.lua"))()
 ```
-
-## Features
-- Clean interface
-- Auto-updates
-- Built-in security
-- Game detection
 
 ## Contact 
 Discord: sxlent404
