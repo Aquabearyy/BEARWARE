@@ -75,12 +75,6 @@ AllFuncs['Farm Fish'] = function()
     end
 end
 
-AllFuncs['Sell Fish'] = function()
-    while Config['Sell Fish'] and task.wait(3) do
-        game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("selleverything"):InvokeServer()
-    end
-end
-
 local Window = Fluent:CreateWindow({
     Title = "Silent Hub",
     SubTitle = "Private Script",
@@ -108,17 +102,6 @@ Farming:AddToggle("AutoFarm", {
         Config['Farm Fish'] = Value
         if Value then
             task.spawn(AllFuncs['Farm Fish'])
-        end
-    end
-})
-
-Farming:AddToggle("AutoSell", {
-    Title = "Auto Sell Fish",
-    Default = false,
-    Callback = function(Value)
-        Config['Sell Fish'] = Value
-        if Value then
-            task.spawn(AllFuncs['Sell Fish'])
         end
     end
 })
