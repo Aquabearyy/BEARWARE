@@ -14,11 +14,11 @@ local PlayerGui = LocalPlayer.PlayerGui
 local Backpack = LocalPlayer.Backpack
 
 local DarkTheme = {
-    SchemeColor = Color3.fromRGB(15, 15, 15),
-    Background = Color3.fromRGB(10, 10, 10),
-    Header = Color3.fromRGB(12, 12, 12),
+    SchemeColor = Color3.fromRGB(5, 5, 5),
+    Background = Color3.fromRGB(0, 0, 0),
+    Header = Color3.fromRGB(5, 5, 5),
     TextColor = Color3.fromRGB(255, 255, 255),
-    ElementColor = Color3.fromRGB(20, 20, 20)
+    ElementColor = Color3.fromRGB(10, 10, 10)
 }
 
 local ThemeManager = {}
@@ -265,83 +265,6 @@ local ThemeDropdown = InterfaceSection:AddDropdown("Theme", {
         Fluent:SetTheme(Value)
         ThemeManager.Settings.Theme = Value
         ThemeManager:SaveSettings()
-    end
-})
-
-local ConfigSection = Tabs.Settings:AddSection("Configuration")
-
-local function RefreshConfigList()
-    local list = listfiles(SaveManager.Folder)
-    local configs = {}
-    for _, file in ipairs(list) do
-        if file:sub(-5) == ".json" then
-            local configName = file:gsub(SaveManager.Folder .. "\\", ""):sub(1, -6)
-            table.insert(configs, configName)
-        end
-    end
-    return configs
-end
-
-ConfigSection:AddDropdown("ConfigList", {
-    Title = "Config List",
-    Values = RefreshConfigList(),
-    Multi = false,
-    Default = 1,
-})
-
-ConfigSection:AddButton({
-    Title = "Load Config",
-    Description = "Load the selected configuration",
-    Callback = function()
-        SaveManager:Load(SaveManager.Options.ConfigList.Value)
-    end
-})
-
-ConfigSection:AddButton({
-    Title = "Save Config",
-    Description = "Save current settings to selected config",
-    Callback = function()
-        SaveManager:Save(SaveManager.Options.ConfigList.Value)
-    end
-})
-
-ConfigSection:AddButton({
-    Title = "Delete Config",
-    Description = "Delete the selected configuration",
-    Callback = function()
-        local configName = SaveManager.Options.ConfigList.Value
-        local file = SaveManager.Folder .. "/" .. configName .. ".json"
-        if isfile(file) then
-            delfile(file)
-            SaveManager.Options.ConfigList:SetValues(RefreshConfigList())
-            Fluent:Notify({
-                Title = "Config Deleted",
-                Content = "Successfully deleted " .. configName,
-                Duration = 5
-            })
-        end
-    end
-})
-
-ConfigSection:AddInput("ConfigName", {
-    Title = "Config Name",
-    Default = "",
-    Placeholder = "Enter config name",
-    Numeric = false,
-    Finished = true,
-    Callback = function(Value) end
-})
-
-ConfigSection:AddButton({
-    Title = "Create Config",
-    Description = "Create a new configuration",
-    Callback = function()
-        local configName = SaveManager.Options.ConfigName.Value
-        if configName ~= "" then
-            SaveManager:Save(configName)
-            SaveManager.Options.ConfigList:SetValues(RefreshConfigList())
-            SaveManager.Options.ConfigName:SetValue("")
-        end
     end
 })
 
