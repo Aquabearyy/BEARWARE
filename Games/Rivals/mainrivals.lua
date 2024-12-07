@@ -13,10 +13,18 @@ local Mouse = LocalPlayer:GetMouse()
 local PlayerGui = LocalPlayer.PlayerGui
 local Backpack = LocalPlayer.Backpack
 
+local DarkTheme = {
+    SchemeColor = Color3.fromRGB(15, 15, 15),
+    Background = Color3.fromRGB(10, 10, 10),
+    Header = Color3.fromRGB(12, 12, 12),
+    TextColor = Color3.fromRGB(255, 255, 255),
+    ElementColor = Color3.fromRGB(20, 20, 20)
+}
+
 local ThemeManager = {}
 ThemeManager.Folder = "SilentHub"
 ThemeManager.Settings = {
-    Theme = "Default"
+    Theme = "Dark"
 }
 
 function ThemeManager:SetFolder(folder)
@@ -75,25 +83,20 @@ FOVCircle.Color = Color3.new(1, 1, 1)
 
 local function GetClosestPlayer()
     if math.random(1, 100) > Settings.AimbotHitChance then return nil end
-    
     local MaxFOV = Settings.FOV
     local Target = nil
-    
     for _, Player in pairs(Players:GetPlayers()) do
         if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") then
             local Head = Player.Character.Head
             local Vector, OnScreen = Camera:WorldToViewportPoint(Head.Position)
             local Distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(Vector.X, Vector.Y)).Magnitude
-            
             if OnScreen and Distance <= MaxFOV then
                 if Settings.WallCheck then
                     local rayOrigin = Camera.CFrame.Position
                     local rayDirection = (Head.Position - rayOrigin).Unit * 500
-                    
                     local raycastParams = RaycastParams.new()
                     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
                     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                    
                     local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
                     if raycastResult and raycastResult.Instance:IsDescendantOf(Head.Parent) then
                         MaxFOV = Distance
@@ -106,7 +109,6 @@ local function GetClosestPlayer()
             end
         end
     end
-    
     return Target
 end
 
@@ -116,7 +118,7 @@ local Window = Fluent:CreateWindow({
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = false,
-    Theme = ThemeManager.Settings.Theme,
+    Theme = DarkTheme,
     MinimizeKey = Enum.KeyCode[Settings.UIKeybind]
 })
 
@@ -266,6 +268,83 @@ local ThemeDropdown = InterfaceSection:AddDropdown("Theme", {
     end
 })
 
+local ConfigSection = Tabs.Settings:AddSection("Configuration")
+
+local function RefreshConfigList()
+    local list = listfiles(SaveManager.Folder)
+    local configs = {}
+    for _, file in ipairs(list) do
+        if file:sub(-5) == ".json" then
+            local configName = file:gsub(SaveManager.Folder .. "\\", ""):sub(1, -6)
+            table.insert(configs, configName)
+        end
+    end
+    return configs
+end
+
+ConfigSection:AddDropdown("ConfigList", {
+    Title = "Config List",
+    Values = RefreshConfigList(),
+    Multi = false,
+    Default = 1,
+})
+
+ConfigSection:AddButton({
+    Title = "Load Config",
+    Description = "Load the selected configuration",
+    Callback = function()
+        SaveManager:Load(SaveManager.Options.ConfigList.Value)
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "Save Config",
+    Description = "Save current settings to selected config",
+    Callback = function()
+        SaveManager:Save(SaveManager.Options.ConfigList.Value)
+    end
+})
+
+ConfigSection:AddButton({
+    Title = "Delete Config",
+    Description = "Delete the selected configuration",
+    Callback = function()
+        local configName = SaveManager.Options.ConfigList.Value
+        local file = SaveManager.Folder .. "/" .. configName .. ".json"
+        if isfile(file) then
+            delfile(file)
+            SaveManager.Options.ConfigList:SetValues(RefreshConfigList())
+            Fluent:Notify({
+                Title = "Config Deleted",
+                Content = "Successfully deleted " .. configName,
+                Duration = 5
+            })
+        end
+    end
+})
+
+ConfigSection:AddInput("ConfigName", {
+    Title = "Config Name",
+    Default = "",
+    Placeholder = "Enter config name",
+    Numeric = false,
+    Finished = true,
+    Callback = function(Value) end
+})
+
+ConfigSection:AddButton({
+    Title = "Create Config",
+    Description = "Create a new configuration",
+    Callback = function()
+        local configName = SaveManager.Options.ConfigName.Value
+        if configName ~= "" then
+            SaveManager:Save(configName)
+            SaveManager.Options.ConfigList:SetValues(RefreshConfigList())
+            SaveManager.Options.ConfigName:SetValue("")
+        end
+    end
+})
+
 RunService.RenderStepped:Connect(function()
     if Settings.ShowFOV then
         FOVCircle.Position = UserInputService:GetMouseLocation()
@@ -346,9 +425,9 @@ ThemeManager:SetFolder("SilentHub")
 ThemeManager:LoadSettings()
 
 SaveManager:SetLibrary(Fluent)
-SaveManager:IgnoreThemeSettings()
 SaveManager:SetFolder("SilentHub/configs")
 SaveManager:BuildConfigSection(Tabs.Settings)
+SaveManager:LoadAutoloadConfig()
 
 SaveManager:SetIgnoreIndexes({
     "Theme",
@@ -359,6 +438,6 @@ Window:SelectTab(1)
 
 Fluent:Notify({
     Title = "Silent Hub",
-    Content = "The script has been loaded.",
-    Duration = 8
+    Content = "Script loaded successfully",
+    Duration = 5
 })
