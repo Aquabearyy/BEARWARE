@@ -121,14 +121,11 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
     Combat = Window:AddTab({ Title = "Combat", Icon = "swords" }),
     Visuals = Window:AddTab({ Title = "Visuals", Icon = "eye" }),
     Movement = Window:AddTab({ Title = "Movement", Icon = "move" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
-
-local Farming = Tabs.Main:AddSection("Farming")
 
 local AimbotSection = Tabs.Combat:AddSection("Silent Aim")
 
