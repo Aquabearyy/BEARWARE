@@ -6,7 +6,7 @@ local supportedGames = {
     [6403373529] = "Slap Battles",
     [9431156611] = "Slap Royale",
     [17625359962] = "Rivals",
-    [71874690745115] "Rivals", -- Free for all place.
+    [71874690745115] = "Rivals", -- Free for all place in rivals.
     [621129760] = "KAT",
     [16732694052] = "Fisch"
 }
@@ -26,11 +26,11 @@ end
 
 local function loadScript()
     local success, result = pcall(function()
-        if gameId == 6403373529 then -- Slap Royale
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slaproyale.lua"))()
-        elseif gameId == 9431156611 then -- Slap Battles
+        if gameId == 6403373529 then -- Slap Battles
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slapbattles.lua"))()
-        elseif gameId == 17625359962 or 71874690745115 then -- Rivals and free for all place.
+        elseif gameId == 9431156611 then -- Slap Royale
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slaproyale.lua"))()
+        elseif gameId == 17625359962 or gameId == 71874690745115 then -- Rivals and the free for all place in rivals.
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Rivals/mainrivals.lua"))()
         elseif gameId == 621129760 then -- KAT
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/KAT/kat.lua"))()
