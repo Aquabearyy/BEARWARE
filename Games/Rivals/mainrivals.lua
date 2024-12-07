@@ -62,47 +62,6 @@ local Settings = {
     UIKeybind = "RightControl"
 }
 
-local Config = {
-    ['Farm Fish'] = false
-}
-
-local AllFuncs = {}
-
-AllFuncs['Farm Fish'] = function()
-    local RodName = ReplicatedStorage.playerstats[LocalPlayer.Name].Stats.rod.Value
-    while Config['Farm Fish'] and task.wait() do
-        if Backpack:FindFirstChild(RodName) then
-            LocalPlayer.Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
-        end
-        if LocalPlayer.Character:FindFirstChild(RodName) and LocalPlayer.Character:FindFirstChild(RodName):FindFirstChild("bobber") then
-            local XyzClone = game:GetService("ReplicatedStorage").resources.items.items.GPS.GPS.gpsMain.xyz:Clone()
-            XyzClone.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("hud"):WaitForChild("safezone"):WaitForChild("backpack")
-            XyzClone.Name = "Lure"
-            XyzClone.Text = "<font color='#ff4949'>Lure </font>: 0%"
-            repeat
-                pcall(function()
-                    PlayerGui:FindFirstChild("shakeui").safezone:FindFirstChild("button").Size = UDim2.new(1001, 0, 1001, 0)
-                    game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
-                    game:GetService("VirtualUser"):Button1Up(Vector2.new(1, 1))
-                end)
-                XyzClone.Text = "<font color='#ff4949'>Lure </font>: "..tostring(math.floor(LocalPlayer.Character:FindFirstChild(RodName).values.lure.Value * 100) / 100).."%"
-                RunService.Heartbeat:Wait()
-            until not LocalPlayer.Character:FindFirstChild(RodName) or LocalPlayer.Character:FindFirstChild(RodName).values.bite.Value or not Config['Farm Fish']
-            XyzClone.Text = "<font color='#ff4949'>FISHING!</font>"
-            delay(1.5, function()
-                XyzClone:Destroy()
-            end)
-            repeat
-                ReplicatedStorage.events.reelfinished:FireServer(1000000000000000000000000, true)
-                task.wait(.5)
-            until not LocalPlayer.Character:FindFirstChild(RodName) or not LocalPlayer.Character:FindFirstChild(RodName).values.bite.Value or not Config['Farm Fish']
-        else
-            LocalPlayer.Character:FindFirstChild(RodName).events.cast:FireServer(1000000000000000000000000)
-            task.wait(2)
-        end
-    end
-end
-
 local Highlights = {}
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = Settings.FOVThickness
@@ -170,17 +129,6 @@ local Tabs = {
 }
 
 local Farming = Tabs.Main:AddSection("Farming")
-
-Farming:AddToggle("AutoFarm", {
-    Title = "Auto Farm Fish",
-    Default = false,
-    Callback = function(Value)
-        Config['Farm Fish'] = Value
-        if Value then
-            task.spawn(AllFuncs['Farm Fish'])
-        end
-    end
-})
 
 local AimbotSection = Tabs.Combat:AddSection("Silent Aim")
 
