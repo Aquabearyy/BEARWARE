@@ -22,7 +22,8 @@ local Settings = {
     InfJump = false,
     CFSpeed = false,
     SpeedValue = 1,
-    OriginalCFrame = nil
+    OriginalCFrame = nil,
+    UIKeybind = "RightControl"
 }
 
 local DarkTheme = {
@@ -31,6 +32,14 @@ local DarkTheme = {
     Header = Color3.fromRGB(20, 20, 20),
     TextColor = Color3.fromRGB(255, 255, 255),
     ElementColor = Color3.fromRGB(35, 35, 35)
+}
+
+local LightTheme = {
+    SchemeColor = Color3.fromRGB(230, 230, 230),
+    Background = Color3.fromRGB(255, 255, 255),
+    Header = Color3.fromRGB(240, 240, 240),
+    TextColor = Color3.fromRGB(0, 0, 0),
+    ElementColor = Color3.fromRGB(220, 220, 220)
 }
 
 local Highlights = {}
@@ -86,7 +95,8 @@ local Window = Fluent:CreateWindow({
     SubTitle = 'by Example',
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Theme = DarkTheme
+    Theme = DarkTheme,
+    MinimizeKey = Enum.KeyCode[Settings.UIKeybind]
 })
 
 local Tabs = {
@@ -208,6 +218,30 @@ MovementSection:AddSlider("SpeedValue", {
     Rounding = 1,
     Callback = function(Value)
         Settings.SpeedValue = Value
+    end
+})
+
+local InterfaceSection = Tabs.Settings:AddSection("Interface")
+
+InterfaceSection:AddKeybind("UIKeybind", {
+    Title = "Toggle UI",
+    Mode = "Toggle",
+    Default = Settings.UIKeybind,
+    ChangedCallback = function(New)
+        Settings.UIKeybind = New.Name
+        Window.MinimizeKey = Enum.KeyCode[New.Name]
+    end
+})
+
+InterfaceSection:AddToggle("ThemeToggle", {
+    Title = "Use Light Theme",
+    Default = false,
+    Callback = function(Value)
+        if Value then
+            Window:SetTheme(LightTheme)
+        else
+            Window:SetTheme(DarkTheme)
+        end
     end
 })
 
