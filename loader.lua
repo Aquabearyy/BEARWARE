@@ -31,7 +31,7 @@ local function loadScript()
         elseif gameId == 9431156611 then -- Slap Royale
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slaproyale.lua"))()
         elseif gameId == 17625359962 or gameId == 71874690745115 then -- Rivals and the free for all place in rivals.
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Rivals/rivals.luau"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Rivals/rivals.lua"))()
         elseif gameId == 621129760 then -- KAT
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/KAT/kat.lua"))()
         elseif gameId == 16732694052 then -- Fisch
