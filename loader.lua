@@ -1,53 +1,80 @@
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
+local StarterGui = game:GetService("StarterGui")
+local HttpService = game:GetService("HttpService")
 
 local supportedGames = {
-    [6403373529] = "Slap Battles",
-    [9431156611] = "Slap Royale",
-    [17625359962] = "Rivals",
-    [71874690745115] = "Rivals", -- Free for all place in rivals.
-    [621129760] = "KAT",
-    [16732694052] = "Fisch"
+    [6403373529] = {
+        name = "Slap Battles",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Slap%20Battles/slapbattles.lua"
+    },
+    [9431156611] = {
+        name = "Slap Royale",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Slap%20Battles/slaproyale.lua"
+    },
+    [17625359962] = {
+        name = "Rivals",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Rivals/rivals.lua"
+    },
+    [71874690745115] = {
+        name = "Rivals FFA",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Rivals/rivals.lua"
+    },
+    [621129760] = {
+        name = "KAT",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/KAT/kat.lua"
+    },
+    [286090429] = {
+        name = "Arsenal",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Arsenal/arsenal.lua"
+    },
+    [16732694052] = {
+        name = "Fisch",
+        url = "https://raw.githubusercontent.com/sxlent404/SilentHub/main/Games/Fisch/fisch.lua"
+    }
 }
 
-local gameId = game.PlaceId
-local gameName = supportedGames[gameId]
-
-if not gameName then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Game Not Supported",
-        Text = "This game is not supported by the script.",
-        Icon = "rbxassetid://74112517454380",
-        Duration = 5
+local function notify(title, text, duration)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = duration or 5
     })
-    return
 end
 
-local function loadScript()
-    local success, result = pcall(function()
-        if gameId == 6403373529 then -- Slap Battles
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slapbattles.lua"))()
-        elseif gameId == 9431156611 then -- Slap Royale
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Slap%20Battles/slaproyale.lua"))()
-        elseif gameId == 17625359962 or gameId == 71874690745115 then -- Rivals and the free for all place in rivals.
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Rivals/rivals.lua"))()
-        elseif gameId == 621129760 then -- KAT
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/KAT/kat.lua"))()
-        elseif gameId == 16732694052 then -- Fisch
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Fisch/fisch.lua"))()
-        end
+local function fetchScript(url)
+    local success, content = pcall(game.HttpGet, game, url)
+    if not success then
+        error(string.format("Failed to fetch script from URL: %s", content))
+    end
+    return content
+end
+
+local function main()
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
+    
+    local gameInfo = supportedGames[game.PlaceId]
+    if not gameInfo then
+        notify("Game Not Supported", "This game is not supported by the script.")
+        return false
+    end
+    
+    local success, error = pcall(function()
+        notify("Loading Script", string.format("Loading script for %s...", gameInfo.name), 3)
+        
+        local scriptContent = fetchScript(gameInfo.url)
+        loadstring(scriptContent)()
+        
+        notify("Script Loaded", string.format("Successfully loaded %s script!", gameInfo.name), 3)
     end)
     
     if not success then
-        warn("Failed to load script:", result)
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Script Error",
-            Text = "Failed to load script. Check console for details.",
-            Icon = "rbxassetid://74112517454380",
-            Duration = 5
-        })
+        warn("Script Loading Error:", error)
+        notify("Script Error", "Failed to load script. Check console for details.")
+        return false
     end
+    
+    return true
 end
 
-loadScript()
+return main()
