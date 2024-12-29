@@ -35,7 +35,7 @@ local function loadScript()
         elseif gameId == 621129760 then -- KAT
             loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/KAT/kat.lua"))()
         elseif gameId == 16732694052 then -- Fisch
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Fisch/mainfisch.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/refs/heads/main/Games/Fisch/fisch.lua"))()
         end
     end)
     
