@@ -2,7 +2,7 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
-local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/sxlent404/ModdedOrion/refs/heads/main/orion.lua'))()
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/sxlent404/ModdedOrion/main/source.lua'))()
 local Window = OrionLib:MakeWindow({
     IntroText = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
     IntroIcon = "rbxassetid://15315284749",
