@@ -15,4 +15,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/m
 ```
 
 ## Contact 
-Discord: sxlent404
+Discord: beary_v2
