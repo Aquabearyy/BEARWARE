@@ -2,22 +2,29 @@ local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 
 local supportedGames = {
+
+        -- Slap Battles
     [6403373529] = {
         name = "Slap Battles",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slapbattles.lua"
     },
+    
     [9431156611] = {
         name = "Slap Royale",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slaproyale.lua"
     },
+
+        -- Rivals
     [17625359962] = {
         name = "Rivals",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
     },
+
     [71874690745115] = {
         name = "Rivals FFA",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
     },
+
     [621129760] = {
         name = "KAT",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/KAT/kat.lua"
@@ -26,6 +33,10 @@ local supportedGames = {
         name = "Arsenal",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Arsenal/arsenal.lua"
     },
+    [116605585218149] = {
+        name = "Go Fishing",
+        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Go-Fishing/Go-Fishing.lua"
+    },
     [16732694052] = {
         name = "Fisch",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Fisch/fisch.lua"
@@ -33,11 +44,7 @@ local supportedGames = {
 }
 
 local function notify(title, text, duration)
-    StarterGui:SetCore("SendNotification", {
-        Title = title,
-        Text = text,
-        Duration = duration or 5
-    })
+    StarterGui:SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 5})
 end
 
 local function fetchScript(url)
