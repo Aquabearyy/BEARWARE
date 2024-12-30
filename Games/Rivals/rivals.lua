@@ -295,8 +295,8 @@ local weaponSkins = {
     ["Medkit"] = {"Default", "Laptop", "Breifcase", "Bucket of Candy", "Sandwich", "Milk & Cookies"},
     ["Molotov"] = {"Default", "Hexxed Candle", "Coffee", "Torch", "Hot Coals"},
     ["Smoke Grenade"] = {"Default", "Balance", "Emoji Cloud", "Eyeball", "Snowglobe"},
-    ["Warhorn"] = {"Trumpet", "Mammoth Horn", "Dev-in-the-Box"},
-    ["Satchel"] = {"Suspicous Gift", "Advanced Satchel"},
+    ["Warhorn"] = {"Default", "Mammoth Horn", "Dev-in-the-Box"},
+    ["Satchel"] = {"Default", "Suspicous Gift", "Advanced Satchel"},
     ["Subspace Tripmine"] = {"Default", "Don't Press", "Spring", "Trick or Treat"}
 }
 
@@ -317,7 +317,7 @@ local meleeWeapons = {
 
 local utilityWeapons = {
     "Flashbang", "Freeze Ray", "Grenade", "Medkit", "Molotov",
-    "Smoke Grenade", "Subspace Tripmine", "War horn", "Satchel"
+    "Smoke Grenade", "Subspace Tripmine", "Warhorn", "Satchel"
 }
 
 Players.PlayerAdded:Connect(function(player)
