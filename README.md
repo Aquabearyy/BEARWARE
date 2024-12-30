@@ -3,11 +3,12 @@
 Simple and powerful hub for popular Roblox games.
 
 ## Supported Games
-- Slap Battles 
-- Slap Royale
+- Slap Battles (including slap royale)
 - KAT
-- Rivals
+- Rivals (including Rivals FFA place)
 - Fisch
+- Arsenal
+- Go Fishing
 
 ## Usage
 ```lua
