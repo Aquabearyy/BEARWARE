@@ -11,7 +11,7 @@ Simple and powerful hub for popular Roblox games.
 
 ## Usage
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/SilentHub/main/loader.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/Bear-hub/main/loader.lua"))()
 ```
 
 ## Contact 
