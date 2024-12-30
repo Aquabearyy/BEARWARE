@@ -150,32 +150,67 @@ local MovementTab = Window:MakeTab({Name = "Movement", Icon = "rbxassetid://4483
 local MovementSection = MovementTab:AddSection({Name = "Movement Mods"})
 
 local bHopEnabled = false
+local jumpDelay = 0
+local velocityMultiplier = 1.2
+
+local function GetMoveVector()
+    local camera = workspace.CurrentCamera
+    local character = game.Players.LocalPlayer.Character
+    if not character then return Vector3.new() end
+    
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return Vector3.new() end
+    
+    local moveDirection = humanoid.MoveDirection
+    if moveDirection.Magnitude == 0 then return Vector3.new() end
+    
+    local cameraLook = camera.CFrame.LookVector
+    cameraLook = Vector3.new(cameraLook.X, 0, cameraLook.Z).Unit
+    local angle = math.atan2(cameraLook.Z, cameraLook.X)
+    
+    local moveVector = moveDirection * velocityMultiplier
+    return moveVector
+end
+
 local function BunnyHop()
     while bHopEnabled do
-        local humanoid = game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-        if humanoid and humanoid.FloorMaterial == Enum.Material.Air then
-            game.Players.LocalPlayer.Character:TranslateBy(game.Players.LocalPlayer.Character.Humanoid.MoveDirection * 0.35)
-        end
-        if humanoid and humanoid.Jump == false then
-            humanoid.Jump = true
+        local character = game.Players.LocalPlayer.Character
+        if not character then task.wait() continue end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and rootPart then
+            local moveVector = GetMoveVector()
+            
+            if moveVector.Magnitude > 0 then
+                if humanoid.FloorMaterial == Enum.Material.Air then
+                    rootPart.CFrame = rootPart.CFrame + moveVector * 0.06
+                    jumpDelay = 0
+                else
+                    if jumpDelay <= 0 then
+                        humanoid.Jump = true
+                        jumpDelay = 0.05
+                    else
+                        jumpDelay = jumpDelay - task.wait()
+                    end
+                end
+            end
         end
         task.wait()
     end
 end
 
-MovementSection:AddToggle({Name = "Bunny Hop", Default = false, Flag = "BHop", Callback = function(Value)
-    bHopEnabled = Value
-    if Value then
-        coroutine.wrap(BunnyHop)()
+MovementSection:AddToggle({
+    Name = "Enhanced Bunny Hop",
+    Default = false,
+    Flag = "BHop",
+    Callback = function(Value)
+        bHopEnabled = Value
+        if Value then
+            coroutine.wrap(BunnyHop)()
+        end
     end
-end})
-
-MovementSection:AddSlider({Name = "Speed", Min = 16, Max = 500, Default = 16, Color = Color3.fromRGB(255, 255, 255), Increment = 1, Flag = "Speed", Callback = function(Value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-end})
-
-MovementSection:AddSlider({Name = "Jump Power", Min = 50, Max = 500, Default = 50, Color = Color3.fromRGB(255, 255, 255), Increment = 1, Flag = "JumpPower", Callback = function(Value)
-    game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-end})
+})
 
 OrionLib:Init()
