@@ -1,36 +1,7 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local httpService = game:GetService("HttpService")
 
-local ThemeManager = {} do
-    ThemeManager.Folder = "BearHub"
-    ThemeManager.Settings = {
-        Theme = "Amethyst"
-    }
-    function ThemeManager:SetFolder(folder)
-        self.Folder = folder
-        if not isfolder(self.Folder) then
-            makefolder(self.Folder)
-        end
-    end
-    function ThemeManager:SetLibrary(library)
-        self.Library = library
-    end
-    function ThemeManager:SaveSettings()
-        writefile(self.Folder .. "/theme.json", httpService:JSONEncode(self.Settings))
-    end
-    function ThemeManager:LoadSettings()
-        local path = self.Folder .. "/theme.json"
-        if isfile(path) then
-            local data = readfile(path)
-            local success, decoded = pcall(httpService.JSONDecode, httpService, data)
-            if success then
-                self.Settings.Theme = decoded.Theme
-            end
-        end
-    end
-end
-
-Config = {}
+local Config = {}
 local AllFuncs = {}
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -75,29 +46,24 @@ AllFuncs['Farm Fish'] = function()
     end
 end
 
-local Window = Fluent:CreateWindow({
-    Title = "Bear Hub",
-    SubTitle = "Best Script",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = false,
-    Theme = ThemeManager.Settings.Theme,
-    MinimizeKey = Enum.KeyCode.LeftControl
+local Window = OrionLib:MakeWindow({
+    Name = "Bear Hub",
+    HidePremium = false,
+    SaveConfig = false, 
+    ConfigFolder = "BearHub",
+    IntroEnabled = false
 })
 
-ThemeManager:SetLibrary(Fluent)
-ThemeManager:SetFolder("SilentHub")
-ThemeManager:LoadSettings()
+local MainTab = Window:MakeTab({
+    Name = "Main",
+    PremiumOnly = false
+})
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "" })
-}
-
-local Farming = Tabs.Main:AddSection("Farming")
-
-Farming:AddToggle("AutoFarm", {
-    Title = "Auto Farm Fish",
+MainTab:AddToggle({
+    Name = "Auto Farm Fish",
     Default = false,
+    Flag = "AutoFarm",
+    Save = true,
     Callback = function(Value)
         Config['Farm Fish'] = Value
         if Value then
@@ -106,22 +72,4 @@ Farming:AddToggle("AutoFarm", {
     end
 })
 
-local ThemeDropdown = Tabs.Main:AddDropdown("Theme", {
-    Title = "Theme",
-    Description = "Changes the interface theme",
-    Values = Fluent.Themes,
-    Default = table.find(Fluent.Themes, ThemeManager.Settings.Theme) or 1,
-    Callback = function(Value)
-        Fluent:SetTheme(Value)
-        ThemeManager.Settings.Theme = Value
-        ThemeManager:SaveSettings()
-    end
-})
-
-Window:SelectTab(1)
-
-Fluent:Notify({
-    Title = "Silent Hub",
-    Content = "The script has been loaded.",
-    Duration = 8
-})
+OrionLib:Init()
