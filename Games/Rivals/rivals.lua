@@ -291,7 +291,7 @@ local weaponSkins = {
     ["Scythe"] = {"Default", "Anchor", "Keythe", "Bat Scythe", "Scythe of Death", "Cryo Scythe"},
     ["Trowel"] = {"Default", "Garden Shovel", "Plastic Shovel", "Pumpkin Carver"},
     ["Flashbang"] = {"Default", "Camera", "Pixel Flashbang", "Disco Ball", "Skullbang", "Snow Shovel"},
-    ["Freeze Ray"] = {"Default", "Spider Ray", "Temporal Ray", "Bubble Ray", "Wrapped Freeze Ray"}
+    ["Freeze Ray"] = {"Default", "Spider Ray", "Temporal Ray", "Bubble Ray", "Wrapped Freeze Ray"},
     ["Grenade"] = {"Default", "Soul Grenade", "Whoopee Cushion", "Water Balloon", "Jingle Grenade"},
     ["Medkit"] = {"Default", "Laptop", "Breifcase", "Bucket of Candy", "Sandwich", "Milk & Cookies"},
     ["Molotov"] = {"Default", "Hexxed Candle", "Coffee", "Torch", "Hot Coals"},
@@ -455,6 +455,53 @@ local SkinTab = Window:MakeTab({
 local MiscTab = Window:MakeTab({
     Name = "Misc",
     PremiumOnly = false
+})
+
+local Camera = workspace.CurrentCamera
+local stretchConnection = nil
+local stretchEnabled = nil
+local stretchAmount = 0.2
+
+local StretchSection = MiscTab:AddSection({
+    Name = "Stretch Resolution"
+})
+
+StretchSection:AddToggle({
+    Name = "Stretch Resolution",
+    Default = false,
+    Flag = "stretchToggle",
+    Save = true,
+    Callback = function(Value)
+        if Value then
+            if not stretchEnabled then
+                stretchConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                    Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, stretchAmount, 0, 0, 0, 1)
+                end)
+            end
+            stretchEnabled = true
+        else
+            if stretchConnection then
+                stretchConnection:Disconnect()
+                stretchConnection = nil
+                stretchEnabled = nil
+            end
+        end
+    end
+})
+
+StretchSection:AddSlider({
+    Name = "Stretch Amount",
+    Min = 0.1,
+    Max = 1,
+    Default = 0.2,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 0.1,
+    ValueName = "x",
+    Flag = "stretchAmount",
+    Save = true,
+    Callback = function(Value)
+        stretchAmount = Value
+    end
 })
 
 MiscTab:AddToggle({
