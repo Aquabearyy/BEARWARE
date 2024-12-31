@@ -33,6 +33,7 @@ local settings = {
     triggerbot_target = "Head",
     antiflash_enabled = false,
     antismoke_enabled = false,
+    viewmodel_outline = false,
 }
 
 local visual_elements = {}
@@ -262,41 +263,39 @@ end
 
 local weaponSkins = {
     ["Assault Rifle"] = {"Default", "AUG", "Gingerbread AUG", "AK-47", "AKEY-47", "Boneclaw Rifle"},
-    ["Bow"] = {"Default", "Raven Bow", "Bat Bow", "Compound Bow", "Frostbite Bow"},
-    ["Burst Rifle"] = {"Default", "Pixel Burst", "Aqua Burst", "Electro Rifle", "Spectral Burst", "Pine Burst"},
-    ["Crossbow"] = {"Default", "Pixel Crossbow", "Frostbite Crossbow"},
-    ["Energy Rifle"] = {"Default", "Apex Rifle", "Hacker Rifle", "2025 Energy Rifle"},
-    ["Flamethrower"] = {"Default", "Pixel Flamethrower", "Jack O'Thrower", "Lamethrower", "Snowblower"},
-    ["Grenade Launcher"] = {"Default", "Uranium Launcher", "Skull Launcher", "Swashbuckler", "Snowball Launcher"},
-    ["Minigun"] = {"Default", "Pixel Minigun", "Lasergun 3000", "Pumpkin Minigun", "Pumpkin Minigun"},
-    ["Paintball Gun"] = {"Default", "Boba Gun", "Brain Gun", "Slime Gun", "Snowball Gun"},
-    ["RPG"] = {"Default", "Spaceship Launcher", "Nuke Launcher", "Pumpkin Launcher", "RPKEY", "Firework Launcher"},
-    ["Shotgun"] = {"Default", "Hyper Shotgun", "Balloon Shotgun", "Broomstick", "Wrapped Shotgun"},
-    ["Sniper"] = {"Default", "Hyper Sniper", "Keyper", "Pixel Sniper", "Eyething Sniper", "Gingerbread Sniper"},
-    ["Daggers"] = {"Default", "Aces", "Crystal Daggers", "Cookies"},
-    ["Energy Pistols"] = {"Default", "Apex Pistols", "Hacker Pistols", "2025 Energy Pistols"},
-    ["Exogun"] = {"Default", "Ray Gun", "Wondergun", "Singularity", "Exogourd", "Midnight Festive Exogun"},
-    ["Flare Gun"] = {"Default", "Dynamite Gun", "Firework Gun", "Hexxed Flare Gun", "Wrapped Flaregun"},
-    ["Handgun"] = {"Default", "Hand Gun", "Pixel Handgun", "Blaster", "Pumpkin Handgun", "Gingerbread Handgun"},
-    ["Revolver"] = {"Default", "Sheriff", "Peppermint Sheriff", "Boneclaw Revolver", "Desert Eagle"},
-    ["Shorty"] = {"Default", "Lovely Shorty", "Too Shorty", "Demon Shorty", "Not So Shorty", "Wrapped Shorty"},
-    ["Slingshot"] = {"Default", "Goalpost", "Boneshot", "Stick", "Reindeer Slingshot",},
-    ["Uzi"] = {"Default", "Electro Uzi", "Demon Uzi", "Water Uzi", "Pine Uzi"},
-    ["Battle Axe"] = {"Default", "The Shred", "Nordic Axe"},
-    ["Chainsaw"] = {"Default", "Handsaws", "Buzzsaw", "Blobsaw", "Festive Buzzsaw"},
-    ["Fists"] = {"Default", "Boxing Gloves", "Brass Knuckles", "Pumpkin Claws", "Festive Fists"},
-    ["Katana"] = {"Default", "Pixel Katana", "Saber", "Devil's Trident", "Lightning Bolt", "2025 Katana"},
-    ["Knife"] = {"Default", "Karambit", "Chancla", "Machete", "Candy Cane"},
-    ["Scythe"] = {"Default", "Anchor", "Keythe", "Bat Scythe", "Scythe of Death", "Cryo Scythe"},
+    ["Bow"] = {"Default", "Raven Bow", "Bat Bow", "Compound Bow"},
+    ["Burst Rifle"] = {"Default", "Pixel Burst", "Aqua Burst", "Electro Rifle", "Spectral Burst"},
+    ["Crossbow"] = {"Default", "Pixel Crossbow"},
+    ["Energy Rifle"] = {"Default", "Apex Rifle", "Hacker Rifle"},
+    ["Flamethrower"] = {"Default", "Pixel Flamethrower", "Jack O'Thrower", "Lamethrower"},
+    ["Grenade Launcher"] = {"Default", "Uranium Launcher", "Skull Launcher", "Swashbuckler"},
+    ["Minigun"] = {"Default", "Pixel Minigun", "Lasergun 3000", "Pumpkin Minigun"},
+    ["Paintball Gun"] = {"Default", "Boba Gun", "Brain Gun", "Slime Gun"},
+    ["RPG"] = {"Default", "Spaceship Launcher", "Nuke Launcher", "Pumpkin Launcher", "RPKEY"},
+    ["Shotgun"] = {"Default", "Hyper Shotgun", "Balloon Shotgun", "Broomstick"},
+    ["Sniper"] = {"Default", "Hyper Sniper", "Keyper", "Pixel Sniper", "Eyething Sniper"},
+    ["Daggers"] = {"Default", "Aces"},
+    ["Energy Pistols"] = {"Default", "Apex Pistols", "Hacker Pistols"},
+    ["Exogun"] = {"Default", "Ray Gun", "Wondergun", "Singularity", "Exogourd"},
+    ["Flare Gun"] = {"Default", "Dynamite Gun", "Firework Gun", "Hexxed Flare Gun"},
+    ["Handgun"] = {"Default", "Hand Gun", "Pixel Handgun", "Blaster", "Pumpkin Handgun"},
+    ["Revolver"] = {"Default", "Sheriff", "Boneclaw Revolver", "Desert Eagle"},
+    ["Shorty"] = {"Default", "Lovely Shorty", "Too Shorty", "Demon Shorty", "Not So Shorty"},
+    ["Slingshot"] = {"Default", "Goalpost", "Boneshot", "Stick"},
+    ["Uzi"] = {"Default", "Electro Uzi", "Demon Uzi", "Water Uzi"},
+    ["Battle Axe"] = {"Default", "The Shred"},
+    ["Chainsaw"] = {"Default", "Handsaws", "Buzzsaw", "Blobsaw"},
+    ["Fists"] = {"Default", "Boxing Gloves", "Brass Knuckles", "Pumpkin Claws"},
+    ["Katana"] = {"Default", "Pixel Katana", "Saber", "Devil's Trident", "Lightning Bolt"},
+    ["Knife"] = {"Default", "Karambit", "Chancla", "Machete"},
+    ["Scythe"] = {"Default", "Anchor", "Keythe", "Bat Scythe", "Scythe of Death"},
     ["Trowel"] = {"Default", "Garden Shovel", "Plastic Shovel", "Pumpkin Carver"},
-    ["Flashbang"] = {"Default", "Camera", "Pixel Flashbang", "Disco Ball", "Skullbang", "Snow Shovel"},
-    ["Freeze Ray"] = {"Default", "Spider Ray", "Temporal Ray", "Bubble Ray", "Wrapped Freeze Ray"},
-    ["Grenade"] = {"Default", "Soul Grenade", "Whoopee Cushion", "Water Balloon", "Jingle Grenade"},
-    ["Medkit"] = {"Default", "Laptop", "Breifcase", "Bucket of Candy", "Sandwich", "Milk & Cookies"},
-    ["Molotov"] = {"Default", "Hexxed Candle", "Coffee", "Torch", "Hot Coals"},
-    ["Smoke Grenade"] = {"Default", "Balance", "Emoji Cloud", "Eyeball", "Snowglobe"},
-    ["Warhorn"] = {"Default", "Mammoth Horn", "Dev-in-the-Box"},
-    ["Satchel"] = {"Default", "Suspicous Gift", "Advanced Satchel"},
+    ["Flashbang"] = {"Default", "Camera", "Pixel Flashbang", "Disco Ball", "Skullbang"},
+    ["Freeze Ray"] = {"Default", "Spider Ray", "Temporal Ray", "Bubble Ray"},
+    ["Grenade"] = {"Default", "Soul Grenade", "Whoopee Cushion", "Water Balloon"},
+    ["Medkit"] = {"Default", "Laptop", "Breifcase", "Bucket of Candy", "Sandwich"},
+    ["Molotov"] = {"Default", "Hexxed Candle", "Coffee", "Torch"},
+    ["Smoke Grenade"] = {"Default", "Balance", "Emoji Cloud", "Eyeball"},
     ["Subspace Tripmine"] = {"Default", "Don't Press", "Spring", "Trick or Treat"}
 }
 
@@ -317,7 +316,7 @@ local meleeWeapons = {
 
 local utilityWeapons = {
     "Flashbang", "Freeze Ray", "Grenade", "Medkit", "Molotov",
-    "Smoke Grenade", "Subspace Tripmine", "Warhorn", "Satchel"
+    "Smoke Grenade", "Subspace Tripmine"
 }
 
 Players.PlayerAdded:Connect(function(player)
@@ -342,7 +341,6 @@ local AimbotTab
 if identifyexecutor() == "Solara" or identifyexecutor() == "AWP" then
     AimbotTab = Window:MakeTab({
         Name = "Aimbot",
-        Icon = "rbxassetid://10734898592",
         PremiumOnly = false
     })
     
@@ -439,26 +437,32 @@ end
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
-    Icon = "rbxassetid://10723346959",
     PremiumOnly = false
 })
 
 local TriggerbotTab = Window:MakeTab({
     Name = "Triggerbot",
-    Icon = "rbxassetid://10734898355",
     PremiumOnly = false
 })
 
 local SkinTab = Window:MakeTab({
     Name = "Skins",
-    Icon = "rbxassetid://10734950020",
     PremiumOnly = false
 })
 
 local MiscTab = Window:MakeTab({
     Name = "Misc",
-    Icon = "rbxassetid://10734950309",
     PremiumOnly = false
+})
+
+MiscTab:AddToggle({
+    Name = "Viewmodel Outline",
+    Default = false,
+    Flag = "ViewmodelOutline",
+    Save = true,
+    Callback = function(Value)
+        settings.viewmodel_outline = Value
+    end
 })
 
 TriggerbotTab:AddToggle({
@@ -712,13 +716,6 @@ MiscTab:AddToggle({
         Window.SaveConfig = Value
         OrionLib.SaveCfg = Value
         
-        OrionLib:MakeNotification({
-            Name = "Settings",
-            Content = Value and "Your settings will now be saved" or "Your settings will not be saved",
-            Image = "rbxassetid://4483345998",
-            Time = 3
-        })
-        
         if not Value then
             local configFile = "BearHub/" .. game.PlaceId .. ".txt"
             if isfile(configFile) then
@@ -796,6 +793,20 @@ for _, weapon in pairs(utilityWeapons) do
     end
 end
 
+local function updateViewmodelOutline()
+    local username = LocalPlayer.Name
+    local viewmodels = workspace.ViewModels.FirstPerson:GetChildren()
+    
+    for _, model in pairs(viewmodels) do
+        if model.Name:find(username) then
+            local highlight = model.ViewModel
+            if highlight then
+                highlight.OutlineTransparency = settings.viewmodel_outline and 0 or 0.875
+            end
+        end
+    end
+end
+
 local function checkTriggerbot()
     if not settings.triggerbot_enabled then return end
     
@@ -825,6 +836,7 @@ end
 
 RunService.Heartbeat:Connect(function()
     checkTriggerbot()
+    updateViewmodelOutline()
 
     if settings.show_fov then
         local mouse_pos = UserInputService:GetMouseLocation()
