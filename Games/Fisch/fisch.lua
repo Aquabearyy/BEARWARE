@@ -9,6 +9,7 @@ local RunService = game:GetService("RunService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local PlayerGui = LocalPlayer.PlayerGui
 local Backpack = LocalPlayer.Backpack
+local Lighting = game:GetService("Lighting")
 
 local TeleportLocations = {
    ["Sunstone Island"] = CFrame.new(-913.630615234375, 137.29348754882812, -1129.8995361328125),
@@ -65,6 +66,16 @@ AllFuncs['Farm Fish'] = function()
                LocalPlayer.Character.HumanoidRootPart.Anchored = true
            end
        end
+   end
+end
+
+AllFuncs['FullBright'] = function()
+   while Config['FullBright'] and task.wait() do
+       Lighting.Brightness = 2
+       Lighting.ClockTime = 14
+       Lighting.FogEnd = 100000
+       Lighting.GlobalShadows = false
+       Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
    end
 end
 
@@ -132,6 +143,55 @@ TeleportSection:AddButton({
                forceField.Parent = forceFieldPart
            end
            LocalPlayer.Character.HumanoidRootPart.CFrame = TeleportLocations[Config['SelectedLocation']]
+       end
+   end
+})
+
+local VisualsSection = MainTab:AddSection({
+   Name = "Visuals"
+})
+
+VisualsSection:AddToggle({
+   Name = "Walk on Water",
+   Default = false,
+   Flag = "WalkOnWater",
+   Save = true,
+   Callback = function(Value)
+       for i,v in pairs(workspace.zones.fishing:GetChildren()) do
+           if v.Name == "Ocean" then
+               v.CanCollide = Value
+           end
+       end
+   end
+})
+
+VisualsSection:AddToggle({
+   Name = "Remove Fog",
+   Default = false,
+   Flag = "RemoveFog",
+   Save = true,
+   Callback = function(Value)
+       if Value then
+           if game:GetService("Lighting"):FindFirstChild("Sky") then
+               game:GetService("Lighting"):FindFirstChild("Sky").Parent = game:GetService("Lighting").bloom
+           end
+       else
+           if game:GetService("Lighting").bloom:FindFirstChild("Sky") then
+               game:GetService("Lighting").bloom:FindFirstChild("Sky").Parent = game:GetService("Lighting")
+           end
+       end
+   end
+})
+
+VisualsSection:AddToggle({
+   Name = "FullBright",
+   Default = false,
+   Flag = "FullBright", 
+   Save = true,
+   Callback = function(Value)
+       Config['FullBright'] = Value
+       if Value then
+           task.spawn(AllFuncs['FullBright'])
        end
    end
 })
