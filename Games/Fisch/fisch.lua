@@ -188,9 +188,9 @@ local TeleportLocations = {
     ["Statue Of Sovereignty"] = Vector3.new(45.060001, 132.380005, -1013.830017),
     ["Sovereginty Mines"] = Vector3.new(-27.950001, 136.490005, -1121.439941),
     ["Keepers Altar"] = Vector3.new(1296.560059, -805.289978, -298.609985),
-    ["Vertigo"] = "Soon",
-    ["The Depths"] = "Soon",
-    ["Desolate Deep"] = "Soon",
+    ["Vertigo"] = Vector3.new(-115.620003, -515.299988, 1024.540039),
+    ["The Depths"] = Vector3.new(949.099976, -711.659973, 1248.369995),
+    ["Desolate Deep"] = Vector3.new(-1656.400024, -214.190002, -2855.570068),
     ["Desolate Pocket"] = "Soon",
     ["Brine Pool"] = "Soon",
     ["Ancient Isle"] = Vector3.new(6059.620117, 195.279999, 281.369995),
@@ -203,7 +203,7 @@ local TeleportLocations = {
     ["The Arch"] = Vector3.new(1007.799988, 131.320007, -1238.900024),
     ["Birch Cay"] = "Soon",
     ["Harvesters Spike"] = "Soon",
-    ["Northern Expedition"] = "Soon"
+    ["Northern Expedition"] = Vector3.new(19537.759766, 132.669998, 5295.939941)
 }
 
 local locations = {}
