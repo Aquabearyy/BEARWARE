@@ -11,7 +11,7 @@ local Backpack = LocalPlayer.Backpack
 local Lighting = game:GetService("Lighting")
 
 local Window = OrionLib:MakeWindow({
-    Name = "Bear Hub".. identifyexecutor(),
+    Name = "Bear Hub | ".. identifyexecutor(),
     HidePremium = false,
     SaveConfig = false, 
     ConfigFolder = "FishingScript",
