@@ -1,4 +1,4 @@
-# Silent Hub
+# Bear Hub
 
 Simple and powerful hub for popular Roblox games.
 
