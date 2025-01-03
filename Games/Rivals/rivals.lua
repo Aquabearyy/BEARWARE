@@ -10,14 +10,6 @@ local assetFolder = LocalPlayer.PlayerScripts.Assets.ViewModels
 local activeWeapons = {}
 
 local settings = {
-    aimbot_enabled = false,
-    aimbot_fov_size = 100,
-    aimbot_aim_part = "Head",
-    aimbot_keybind = Enum.KeyCode.E,
-    aimbot_wall_check = false,
-    aimbot_distance_check = false,
-    aimbot_max_distance = 1000,
-    show_fov = false,
     esp_enabled = false,
     show_tracers = false,
     show_boxes = false,
@@ -744,27 +736,6 @@ end
 RunService.Heartbeat:Connect(function()
     checkTriggerbot()
     updateViewmodelOutline()
-
-    if settings.show_fov then
-        local mouse_pos = UserInputService:GetMouseLocation()
-        fov_circle.Radius = settings.aimbot_fov_size
-        fov_circle.Position = mouse_pos
-        fov_circle.Visible = true
-    else
-        fov_circle.Visible = false
-    end
-
-    if settings.aimbot_enabled and UserInputService:IsKeyDown(settings.aimbot_keybind) then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild(settings.aimbot_aim_part) then
-            local part = target.Character[settings.aimbot_aim_part]
-            local screen_pos = Camera:WorldToViewportPoint(part.Position)
-            local target_pos = Vector2.new(screen_pos.X, screen_pos.Y)
-            local mouse_pos = UserInputService:GetMouseLocation()
-            local move = target_pos - mouse_pos
-            mousemoverel(move.X, move.Y)
-        end
-    end
 end)
 
 OrionLib:Init()
