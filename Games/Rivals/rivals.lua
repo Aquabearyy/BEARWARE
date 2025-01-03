@@ -43,13 +43,6 @@ local connections = {
     smoke = {},
 }
 
-local fov_circle = Drawing.new("Circle")
-fov_circle.Visible = false
-fov_circle.Color = Color3.fromRGB(255, 255, 255)
-fov_circle.Thickness = 1
-fov_circle.Transparency = 1
-fov_circle.Filled = false
-
 local function is_wall_between(origin, destination)
     local ray = Ray.new(origin, (destination - origin).Unit * 1000)
     local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
@@ -203,43 +196,6 @@ local function toggle_esp(state)
     end
 end
 
-local function getClosestPlayer()
-    local closest_player = nil
-    local shortest_distance = settings.aimbot_fov_size
-    local mouse_pos = UserInputService:GetMouseLocation()
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(settings.aimbot_aim_part) then
-            if settings.alive_check and not is_player_alive(player) then
-                continue
-            end
-
-            if settings.aimbot_distance_check then
-                local magnitude = get_magnitude(player)
-                if magnitude > settings.aimbot_max_distance then
-                    continue
-                end
-            end
-
-            local part = player.Character[settings.aimbot_aim_part]
-            local screen_pos, on_screen = Camera:WorldToViewportPoint(part.Position)
-            
-            if on_screen then
-                if settings.aimbot_wall_check and is_wall_between(Camera.CFrame.Position, part.Position) then
-                    continue
-                end
-                
-                local distance = (Vector2.new(screen_pos.X, screen_pos.Y) - mouse_pos).magnitude
-                if distance < shortest_distance then
-                    shortest_distance = distance
-                    closest_player = player
-                end
-            end
-        end
-    end
-    return closest_player
-end
-
 local function swapWeaponSkins(normalWeaponName, skinName)
     if not normalWeaponName then return end
     local success, result = pcall(function()
@@ -338,104 +294,6 @@ local Window = OrionLib:MakeWindow({
     IntroEnabled = false,
     ConfigFolder = "BearHub"
 })
-
-local AimbotTab
-if identifyexecutor() == "Solara" or identifyexecutor() == "AWP" then
-    AimbotTab = Window:MakeTab({
-        Name = "Aimbot",
-        PremiumOnly = false
-    })
-    
-    AimbotTab:AddToggle({
-        Name = "Enable Aimbot",
-        Default = false,
-        Flag = "AimbotEnabled",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_enabled = Value
-        end
-    })
-    
-    AimbotTab:AddToggle({
-        Name = "Wall Check",
-        Default = false,
-        Flag = "WallCheck",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_wall_check = Value
-        end
-    })
-    
-    AimbotTab:AddToggle({
-        Name = "Distance Check",
-        Default = false,
-        Flag = "AimbotDistanceCheck",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_distance_check = Value
-        end
-    })
-    
-    AimbotTab:AddSlider({
-        Name = "Max Distance",
-        Min = 0,
-        Max = 2000,
-        Default = 1000,
-        Color = Color3.fromRGB(255, 255, 255),
-        Increment = 10,
-        Flag = "AimbotMaxDistance",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_max_distance = Value
-        end
-    })
-    
-    AimbotTab:AddToggle({
-        Name = "Show FOV",
-        Default = false,
-        Flag = "ShowFOV",
-        Save = true,
-        Callback = function(Value)
-            settings.show_fov = Value
-        end
-    })
-    
-    AimbotTab:AddBind({
-        Name = "Aimbot Key",
-        Default = Enum.KeyCode.E,
-        Hold = false,
-        Flag = "AimbotBind",
-        Save = true,
-        Callback = function(Key)
-            settings.aimbot_keybind = Key
-        end
-    })
-    
-    AimbotTab:AddDropdown({
-        Name = "Aim Part",
-        Default = "Head",
-        Options = {"Head", "HumanoidRootPart"},
-        Flag = "AimPart",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_aim_part = Value
-        end
-    })
-    
-    AimbotTab:AddSlider({
-        Name = "FOV Size",
-        Min = 0,
-        Max = 800,
-        Default = 100,
-        Color = Color3.fromRGB(255, 255, 255),
-        Increment = 10,
-        Flag = "FOVSize",
-        Save = true,
-        Callback = function(Value)
-            settings.aimbot_fov_size = Value
-        end
-    })
-end
 
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
