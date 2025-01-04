@@ -23,9 +23,10 @@ local settings = {
     triggerbot_wall_check = false,
     triggerbot_alive_check = false,
     triggerbot_target = "Head",
+    triggerbot_require_rightclick = false,
+    triggerbot_team_check = false,
     antiflash_enabled = false,
     antismoke_enabled = false,
-    viewmodel_outline = false,
 }
 
 local visual_elements = {}
@@ -354,16 +355,6 @@ StretchSection:AddSlider({
     end
 })
 
-MiscTab:AddToggle({
-    Name = "Viewmodel Outline",
-    Default = false,
-    Flag = "ViewmodelOutline",
-    Save = true,
-    Callback = function(Value)
-        settings.viewmodel_outline = Value
-    end
-})
-
 TriggerbotTab:AddToggle({
     Name = "Enable Triggerbot",
     Default = false,
@@ -393,6 +384,28 @@ TriggerbotTab:AddToggle({
         settings.triggerbot_alive_check = Value
     end
 })
+
+TriggerbotTab:AddToggle({
+    Name = "Team Check",
+    Default = false,
+    Flag = "TriggerbotTeamCheck",
+    Save = true,
+    Callback = function(Value)
+        settings.triggerbot_team_check = Value
+    end
+})
+
+TriggerbotTab:AddToggle({
+    Name = "Require Right Click",
+    Default = false,
+    Flag = "TriggerbotRightClick",
+    Save = true,
+    Callback = function(Value)
+        settings.triggerbot_require_rightclick = Value
+    end
+})
+
+TriggerbotTab:AddParagraph("⚠️ WARNING ⚠️", "Use Spray/Automatic weapons while right clicking might not work some times.")
 
 TriggerbotTab:AddSlider({
     Name = "Delay (ms)",
@@ -692,50 +705,133 @@ for _, weapon in pairs(utilityWeapons) do
     end
 end
 
-local function updateViewmodelOutline()
-    local username = LocalPlayer.Name
-    local viewmodels = workspace.ViewModels.FirstPerson:GetChildren()
-    
-    for _, model in pairs(viewmodels) do
-        if model.Name:find(username) then
-            local highlight = model.ViewModel
-            if highlight then
-                highlight.OutlineTransparency = settings.viewmodel_outline and 0 or 0.875
+local function isTeammate(player)
+    local character = workspace:FindFirstChild(player.Name)
+    if character then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local label = root:FindFirstChild("TeammateLabel")
+            if label then
+                local playerLabel = label:FindFirstChild("Player")
+                if playerLabel then
+                    return playerLabel.Visible
+                end
             end
         end
     end
+    return false
 end
 
+local isFiring = false
+local isTargetValid = false
+
 local function checkTriggerbot()
-    if not settings.triggerbot_enabled then return end
+    if not settings.triggerbot_enabled then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    if settings.triggerbot_require_rightclick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
     
     local target = Mouse.Target
-    if target and target.Parent then
-        local character = target.Parent
-        local targetPart
-        if settings.triggerbot_target == "Both" then
-            targetPart = character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
-        else
-            targetPart = character:FindFirstChild(settings.triggerbot_target)
+    if not target then
+        if isFiring then
+            mouse1release()
+            isFiring = false
         end
-        if not targetPart then return end
-        
-        local player = Players:GetPlayerFromCharacter(character)
-        if not player or player == LocalPlayer then return end
-        
-        if settings.triggerbot_alive_check and not is_player_alive(player) then return end
-        if settings.triggerbot_wall_check and is_wall_between(Camera.CFrame.Position, targetPart.Position) then return end
-        
+        isTargetValid = false
+        return
+    end
+    
+    local character = target.Parent
+    if not character then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    local targetPart
+    if settings.triggerbot_target == "Both" then
+        targetPart = character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
+    else
+        targetPart = character:FindFirstChild(settings.triggerbot_target)
+    end
+    if not targetPart then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    local player = Players:GetPlayerFromCharacter(character)
+    if not player or player == LocalPlayer then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    if settings.triggerbot_team_check and isTeammate(player) then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    if settings.triggerbot_alive_check and not is_player_alive(player) then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    if settings.triggerbot_wall_check and is_wall_between(Camera.CFrame.Position, targetPart.Position) then
+        if isFiring then
+            mouse1release()
+            isFiring = false
+        end
+        isTargetValid = false
+        return
+    end
+    
+    isTargetValid = true
+    
+    if isTargetValid and not isFiring then
         task.wait(settings.triggerbot_delay)
         mouse1press()
-        task.wait()
-        mouse1release()
+        isFiring = true
     end
 end
 
+local lastCheck = 0
 RunService.Heartbeat:Connect(function()
-    checkTriggerbot()
-    updateViewmodelOutline()
+    local currentTime = time()
+    if currentTime - lastCheck >= 0.01 then
+        checkTriggerbot()
+        lastCheck = currentTime
+    end
 end)
 
 OrionLib:Init()
