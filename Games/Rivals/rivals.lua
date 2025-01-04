@@ -1,4 +1,5 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/sxlent404/ModdedOrion/main/source.lua')))()
+local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/MS-ESP/refs/heads/main/source.lua"))()
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -6,18 +7,24 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
-local assetFolder = LocalPlayer.PlayerScripts.Assets.ViewModels
 local activeWeapons = {}
 
 local settings = {
     esp_enabled = false,
-    show_tracers = false,
-    show_boxes = false,
-    show_names = false,
-    mouse_tracers = false,
-    alive_check = false,
-    distance_check = false,
-    max_distance = 1000,
+    esp_fill_color = Color3.new(1, 1, 1),
+    esp_outline_color = Color3.new(1, 1, 1),
+    esp_text_color = Color3.new(1, 1, 1),
+    esp_tracer_color = Color3.new(1, 1, 1),
+    esp_fill_transparency = 0.75,
+    esp_outline_transparency = 0,
+    esp_text_size = 22,
+    esp_tracers = true,
+    esp_names = true,
+    show_distance = true,
+    show_health = true,
+    rainbow_esp = false,
+    tracer_origin = "Bottom",
+
     triggerbot_enabled = false,
     triggerbot_delay = 0,
     triggerbot_wall_check = false,
@@ -29,12 +36,89 @@ local settings = {
     antismoke_enabled = false,
 }
 
-local visual_elements = {}
+local ESPTable = {}
+local MAX_DISTANCE = 500
 
 local connections = {
     flash = {},
     smoke = {},
 }
+
+local function GetDisplayText(player)
+    if not player or not player.Character then return "" end
+    local text = player.Name
+    if settings.show_health and player.Character and player.Character:FindFirstChild("Humanoid") then
+        text = string.format("%s [%.1f]", text, player.Character.Humanoid.Health)
+    end
+    return text
+end
+
+local function RemoveESP(player)
+    if ESPTable[player] then
+        if ESPTable[player].ESP then
+            ESPTable[player].ESP.Destroy()
+        end
+        
+        for _, connection in pairs(ESPTable[player].Connections) do
+            connection:Disconnect()
+        end
+        
+        ESPTable[player] = nil
+    end
+end
+
+local function CreateESP(player)
+    if not player or not player.Character then return end
+    if not (player.Character.PrimaryPart and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0) then return end
+    
+    local distance = (player.Character.PrimaryPart.Position - Camera.CFrame.Position).Magnitude
+    if distance > MAX_DISTANCE then return end
+
+    local playerEsp = ESPLibrary.ESP.Highlight({
+        Name = settings.esp_names and GetDisplayText(player) or "",
+        Model = player.Character,
+        FillColor = settings.esp_fill_color,
+        OutlineColor = settings.esp_outline_color,
+        TextColor = settings.esp_text_color,
+        TextSize = settings.esp_text_size,
+        FillTransparency = settings.esp_fill_transparency,
+        OutlineTransparency = settings.esp_outline_transparency,
+        Tracer = {
+            Enabled = settings.esp_tracers,
+            From = settings.tracer_origin,
+            Color = settings.esp_tracer_color
+        }
+    })
+    
+    ESPTable[player] = {
+        ESP = playerEsp,
+        Connections = {}
+    }
+    
+    ESPTable[player].Connections.HealthChanged = player.Character.Humanoid.HealthChanged:Connect(function(newHealth)
+        if newHealth > 0 then
+            playerEsp.SetText(GetDisplayText(player))
+        else
+            HandleCharacter(player)
+        end
+    end)
+    
+    ESPTable[player].Connections.CharacterRemoving = player.CharacterRemoving:Connect(function()
+        HandleCharacter(player)
+    end)
+    
+    ESPTable[player].Connections.CharacterAdded = player.CharacterAdded:Connect(function()
+        HandleCharacter(player)
+    end)
+end
+
+local function HandleCharacter(player)
+    if not settings.esp_enabled then return end
+    if player == game:GetService("Players").LocalPlayer then return end
+    
+    RemoveESP(player)
+    CreateESP(player)
+end
 
 local function is_wall_between(origin, destination)
     local ray = Ray.new(origin, (destination - origin).Unit * 1000)
@@ -59,134 +143,6 @@ local function get_magnitude(player)
     local humanoid_root_part = character:FindFirstChild("HumanoidRootPart")
     if not humanoid_root_part then return math.huge end
     return (humanoid_root_part.Position - Camera.CFrame.Position).Magnitude
-end
-
-local function create_esp(player)
-    local box = Drawing.new("Square")
-    box.Visible = false
-    box.Color = Color3.fromRGB(255, 255, 255)
-    box.Thickness = 1
-    box.Transparency = 1
-    box.Filled = false
-
-    local tracer = Drawing.new("Line")
-    tracer.Visible = false
-    tracer.Color = Color3.fromRGB(255, 255, 255)
-    tracer.Thickness = 1
-    tracer.Transparency = 1
-
-    local name = Drawing.new("Text")
-    name.Visible = false
-    name.Center = true
-    name.Outline = true
-    name.Font = 2
-    name.Size = 13
-    name.Color = Color3.fromRGB(255, 255, 255)
-    name.Transparency = 1
-
-    return {
-        box = box,
-        tracer = tracer,
-        name = name,
-        connections = {}
-    }
-end
-
-local function remove_esp(player)
-    local elements = visual_elements[player]
-    if not elements then return end
-    
-    for _, connection in pairs(elements.connections) do
-        connection:Disconnect()
-    end
-    
-    elements.box:Remove()
-    elements.tracer:Remove()
-    elements.name:Remove()
-    
-    visual_elements[player] = nil
-end
-
-local function add_esp(player)
-    if player == LocalPlayer then return end
-    if visual_elements[player] then remove_esp(player) end
-    
-    visual_elements[player] = create_esp(player)
-    
-    local function esp_update()
-        local elements = visual_elements[player]
-        if not elements then return end
-        
-        local character = player.Character
-        local humanoid_root_part = character and character:FindFirstChild("HumanoidRootPart")
-        local humanoid = character and character:FindFirstChild("Humanoid")
-        
-        if not settings.esp_enabled or not character or not humanoid_root_part or not humanoid then
-            elements.box.Visible = false
-            elements.tracer.Visible = false
-            elements.name.Visible = false
-            return
-        end
-        
-        if settings.alive_check and humanoid.Health <= 0 then
-            elements.box.Visible = false
-            elements.tracer.Visible = false
-            elements.name.Visible = false
-            return
-        end
-        
-        if settings.distance_check then
-            local magnitude = get_magnitude(player)
-            if magnitude > settings.max_distance then
-                elements.box.Visible = false
-                elements.tracer.Visible = false
-                elements.name.Visible = false
-                return
-            end
-        end
-        
-        local vector, on_screen = Camera:WorldToViewportPoint(humanoid_root_part.Position)
-        
-        if not on_screen then
-            elements.box.Visible = false
-            elements.tracer.Visible = false
-            elements.name.Visible = false
-            return
-        end
-        
-        local size = Vector2.new(2000 / vector.Z, 2000 / vector.Z)
-        elements.box.Size = size
-        elements.box.Position = Vector2.new(vector.X - size.X / 2, vector.Y - size.Y / 2)
-        elements.box.Visible = settings.show_boxes
-        
-        elements.tracer.From = settings.mouse_tracers and UserInputService:GetMouseLocation() or Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-        elements.tracer.To = Vector2.new(vector.X, vector.Y)
-        elements.tracer.Visible = settings.show_tracers
-        
-        elements.name.Position = Vector2.new(vector.X, vector.Y - size.Y / 2 - 16)
-        elements.name.Text = player.Name
-        elements.name.Visible = settings.show_names
-    end
-    
-    local connection = RunService.RenderStepped:Connect(esp_update)
-    visual_elements[player].connections[#visual_elements[player].connections + 1] = connection
-    
-    esp_update()
-end
-
-local function toggle_esp(state)
-    settings.esp_enabled = state
-    if not state then
-        for player, _ in pairs(visual_elements) do
-            remove_esp(player)
-        end
-        return
-    end
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            add_esp(player)
-        end
-    end
 end
 
 local function swapWeaponSkins(normalWeaponName, skinName)
@@ -270,14 +226,38 @@ local utilityWeapons = {
     "Smoke Grenade", "Subspace Tripmine", "Satchel", "Warhorn"
 }
 
-Players.PlayerAdded:Connect(function(player)
-    if settings.esp_enabled then
-        add_esp(player)
+local playerConnections = {}
+
+local function SetupPlayerConnections(player)
+    if playerConnections[player] then
+        playerConnections[player]:Disconnect()
     end
+    
+    playerConnections[player] = player.CharacterAdded:Connect(function(char)
+        task.wait(0.1)
+        if settings.esp_enabled then
+            RemoveESP(player)
+            CreateESP(player)
+        end
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        SetupPlayerConnections(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    SetupPlayerConnections(player)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-    remove_esp(player)
+    if playerConnections[player] then
+        playerConnections[player]:Disconnect()
+        playerConnections[player] = nil
+    end
+    RemoveESP(player)
 end)
 
 local Window = OrionLib:MakeWindow({
@@ -291,6 +271,258 @@ local Window = OrionLib:MakeWindow({
 local VisualsTab = Window:MakeTab({
     Name = "Visuals",
     PremiumOnly = false
+})
+
+VisualsTab:AddToggle({
+    Name = "ESP Enabled",
+    Default = false,
+    Flag = "ESPEnabled",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_enabled = Value
+        if Value then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        else
+            for player in pairs(ESPTable) do
+                RemoveESP(player)
+            end
+            table.clear(ESPTable)
+        end
+    end
+})
+
+VisualsTab:AddToggle({
+    Name = "Show Names",
+    Default = true,
+    Flag = "ESPNames",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_names = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+VisualsTab:AddToggle({
+    Name = "Show Health",
+    Default = true,
+    Flag = "ShowHealth",
+    Save = true,
+    Callback = function(Value)
+        settings.show_health = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end    
+})
+
+VisualsTab:AddToggle({
+    Name = "Show Distance",
+    Default = true,
+    Flag = "ShowDistance", 
+    Save = true,
+    Callback = function(Value)
+        settings.show_distance = Value
+        ESPLibrary.Distance.Set(Value)
+    end    
+})
+
+VisualsTab:AddToggle({
+    Name = "Show Tracers",
+    Default = true,
+    Flag = "ESPTracers",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_tracers = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+VisualsTab:AddDropdown({
+    Name = "Tracer Origin",
+    Default = "Bottom",
+    Options = {"Top", "Center", "Bottom", "Mouse"},
+    Flag = "TracerOrigin",
+    Save = true,
+    Callback = function(Value)
+        settings.tracer_origin = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+VisualsTab:AddToggle({
+    Name = "Rainbow ESP",
+    Default = false,
+    Flag = "RainbowESP",
+    Save = true,
+    Callback = function(Value)
+        settings.rainbow_esp = Value
+        ESPLibrary.Rainbow.Set(Value)
+    end
+})
+
+local ColorSection = VisualsTab:AddSection({
+    Name = "ESP Colors"
+})
+
+ColorSection:AddColorpicker({
+    Name = "Fill Color",
+    Default = Color3.new(1, 1, 1),
+    Flag = "ESPFillColor",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_fill_color = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+ColorSection:AddColorpicker({
+    Name = "Outline Color",
+    Default = Color3.new(1, 1, 1),
+    Flag = "ESPOutlineColor",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_outline_color = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+ColorSection:AddColorpicker({
+    Name = "Text Color",
+    Default = Color3.new(1, 1, 1),
+    Flag = "ESPTextColor",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_text_color = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+ColorSection:AddColorpicker({
+    Name = "Tracer Color",
+    Default = Color3.new(1, 1, 1),
+    Flag = "ESPTracerColor",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_tracer_color = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+local ConfigSection = VisualsTab:AddSection({
+    Name = "ESP Config"
+})
+
+ConfigSection:AddSlider({
+    Name = "Text Size",
+    Min = 12,
+    Max = 32,
+    Default = 22,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    Flag = "ESPTextSize",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_text_size = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+ConfigSection:AddSlider({
+    Name = "Fill Transparency",
+    Min = 0,
+    Max = 1,
+    Default = 0.75,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 0.05,
+    Flag = "ESPFillTransparency",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_fill_transparency = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
+})
+
+ConfigSection:AddSlider({
+    Name = "Outline Transparency",
+    Min = 0,
+    Max = 1,
+    Default = 0,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 0.05,
+    Flag = "ESPOutlineTransparency",
+    Save = true,
+    Callback = function(Value)
+        settings.esp_outline_transparency = Value
+        if settings.esp_enabled then
+            for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= LocalPlayer then
+                    HandleCharacter(player)
+                end
+            end
+        end
+    end
 })
 
 local TriggerbotTab = Window:MakeTab({
@@ -429,90 +661,6 @@ TriggerbotTab:AddDropdown({
     Save = true,
     Callback = function(Value)
         settings.triggerbot_target = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "ESP Enabled",
-    Default = false,
-    Flag = "ESPEnabled",
-    Save = true,
-    Callback = function(Value)
-        toggle_esp(Value)
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Show Boxes",
-    Default = false,
-    Flag = "ShowBoxes",
-    Save = true,
-    Callback = function(Value)
-        settings.show_boxes = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Show Tracers",
-    Default = false,
-    Flag = "ShowTracers",
-    Save = true,
-    Callback = function(Value)
-        settings.show_tracers = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Show Names",
-    Default = false,
-    Flag = "ShowNames",
-    Save = true,
-    Callback = function(Value)
-        settings.show_names = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Mouse Tracers",
-    Default = false,
-    Flag = "MouseTracers",
-    Save = true,
-    Callback = function(Value)
-        settings.mouse_tracers = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Alive Check",
-    Default = false,
-    Flag = "AliveCheck",
-    Save = true,
-    Callback = function(Value)
-        settings.alive_check = Value
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Distance Check",
-    Default = false,
-    Flag = "DistanceCheck",
-    Save = true,
-    Callback = function(Value)
-        settings.distance_check = Value
-    end
-})
-
-VisualsTab:AddSlider({
-    Name = "Max Distance",
-    Min = 0,
-    Max = 2000,
-    Default = 1000,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 10,
-    Flag = "MaxDistance",
-    Save = true,
-    Callback = function(Value)
-        settings.max_distance = Value
     end
 })
 
@@ -779,7 +927,7 @@ local function checkTriggerbot()
         return
     end
     
-    local player = Players:GetPlayerFromCharacter(character)
+    local player = game:GetService("Players"):GetPlayerFromCharacter(character)
     if not player or player == LocalPlayer then
         if isFiring then
             mouse1release()
