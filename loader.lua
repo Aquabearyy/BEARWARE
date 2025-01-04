@@ -1,9 +1,12 @@
 local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 
-local supportedGames = {
+if not getgenv().BearHubLoaded then
+    getgenv().BearHubLoaded = false
+end
 
-        -- Slap Battles
+local supportedGames = {
+    -- Slap Battles
     [6403373529] = {
         name = "Slap Battles",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slapbattles.lua"
@@ -13,18 +16,15 @@ local supportedGames = {
         name = "Slap Royale",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slaproyale.lua"
     },
-
-        -- Rivals
+    -- Rivals
     [17625359962] = {
         name = "Rivals",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
     },
-
     [71874690745115] = {
         name = "Rivals FFA",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
     },
-
     [621129760] = {
         name = "KAT",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/KAT/kat.lua"
@@ -60,23 +60,28 @@ local function fetchScript(url)
 end
 
 local function main()
+    if getgenv().BearHubLoaded then
+        notify("Already Loaded", "Bear Hub is already running!", 3)
+        return false
+    end
+
     if not game:IsLoaded() then
         game.Loaded:Wait()
     end
     
     local gameInfo = supportedGames[game.PlaceId]
-    if not gameInfo then
-        notify("Game Not Supported", "This game is not supported by the script.")
-        return false
-    end
-    
     local success, error = pcall(function()
-        notify("Loading Script", string.format("Loading script for %s...", gameInfo.name), 3)
-        
-        local scriptContent = fetchScript(gameInfo.url)
-        loadstring(scriptContent)()
-        
-        notify("Script Loaded", string.format("Successfully loaded %s script!", gameInfo.name), 3)
+        if gameInfo then
+            notify("Loading Script", string.format("Loading script for %s...", gameInfo.name), 3)
+            local scriptContent = fetchScript(gameInfo.url)
+            loadstring(scriptContent)()
+            notify("Script Loaded", string.format("Successfully loaded %s script!", gameInfo.name), 3)
+        else
+            notify("Game Not Supported", "Loading universal script...", 3)
+            local universalScript = fetchScript("https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Universal/universal.lua")
+            loadstring(universalScript)()
+            notify("Script Loaded", "Universal script loaded successfully!", 3)
+        end
     end)
     
     if not success then
@@ -85,6 +90,7 @@ local function main()
         return false
     end
     
+    getgenv().BearHubLoaded = true
     return true
 end
 
