@@ -7,6 +7,8 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local assetFolder = ReplicatedStorage:WaitForChild("Assets")
 local activeWeapons = {}
 
 local settings = {
@@ -69,55 +71,60 @@ end
 
 local function CreateESP(player)
     if not player or not player.Character then return end
-    if not (player.Character.PrimaryPart and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0) then return end
+    if not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    if not player.Character:FindFirstChild("Humanoid") then return end
+    if player.Character.Humanoid.Health <= 0 then return end
     
-    local distance = (player.Character.PrimaryPart.Position - Camera.CFrame.Position).Magnitude
+    local distance = (player.Character.HumanoidRootPart.Position - Camera.CFrame.Position).Magnitude
     if distance > MAX_DISTANCE then return end
-
-    local playerEsp = ESPLibrary.ESP.Highlight({
-        Name = settings.esp_names and GetDisplayText(player) or "",
-        Model = player.Character,
-        FillColor = settings.esp_fill_color,
-        OutlineColor = settings.esp_outline_color,
-        TextColor = settings.esp_text_color,
-        TextSize = settings.esp_text_size,
-        FillTransparency = settings.esp_fill_transparency,
-        OutlineTransparency = settings.esp_outline_transparency,
-        Tracer = {
-            Enabled = settings.esp_tracers,
-            From = settings.tracer_origin,
-            Color = settings.esp_tracer_color
+    
+    pcall(function()
+        local playerEsp = ESPLibrary.ESP.Highlight({
+            Name = settings.esp_names and GetDisplayText(player) or "",
+            Model = player.Character,
+            FillColor = settings.esp_fill_color,
+            OutlineColor = settings.esp_outline_color,
+            TextColor = settings.esp_text_color,
+            TextSize = settings.esp_text_size,
+            FillTransparency = settings.esp_fill_transparency,
+            OutlineTransparency = settings.esp_outline_transparency,
+            Tracer = {
+                Enabled = settings.esp_tracers,
+                From = settings.tracer_origin,
+                Color = settings.esp_tracer_color
+            }
+        })
+        
+        ESPTable[player] = {
+            ESP = playerEsp,
+            Connections = {}
         }
-    })
-    
-    ESPTable[player] = {
-        ESP = playerEsp,
-        Connections = {}
-    }
-    
-    ESPTable[player].Connections.HealthChanged = player.Character.Humanoid.HealthChanged:Connect(function(newHealth)
-        if newHealth > 0 then
-            playerEsp.SetText(GetDisplayText(player))
-        else
-            HandleCharacter(player)
+        
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            ESPTable[player].Connections.HealthChanged = player.Character.Humanoid.HealthChanged:Connect(function(newHealth)
+                if newHealth > 0 then
+                    playerEsp.SetText(GetDisplayText(player))
+                else
+                    HandleCharacter(player)
+                end
+            end)
         end
-    end)
-    
-    ESPTable[player].Connections.CharacterRemoving = player.CharacterRemoving:Connect(function()
-        HandleCharacter(player)
-    end)
-    
-    ESPTable[player].Connections.CharacterAdded = player.CharacterAdded:Connect(function()
-        HandleCharacter(player)
     end)
 end
 
 local function HandleCharacter(player)
     if not settings.esp_enabled then return end
-    if player == game:GetService("Players").LocalPlayer then return end
+    if not player or player == game:GetService("Players").LocalPlayer then return end
     
-    RemoveESP(player)
-    CreateESP(player)
+    task.spawn(function()
+        pcall(function()
+            RemoveESP(player)
+            task.wait(0.1)
+            if player and player.Character then
+                CreateESP(player)
+            end
+        end)
+    end)
 end
 
 local function is_wall_between(origin, destination)
@@ -201,8 +208,8 @@ local weaponSkins = {
     ["Medkit"] = {"Default", "Laptop", "Breifcase", "Bucket of Candy", "Sandwich", "Milk & Cookies"},
     ["Molotov"] = {"Default", "Hexxed Candle", "Coffee", "Torch", "Hot Coals"},
     ["Smoke Grenade"] = {"Default", "Balance", "Emoji Cloud", "Eyeball", "Snowglobe"},
-    ["Warhorn"] = {"Trumpet", "Mammoth Horn", "Dev-in-the-Box"},
-    ["Satchel"] = {"Suspicous Gift", "Advanced Satchel"},
+    ["Warhorn"] = {"Default", "Trumpet", "Mammoth Horn", "Dev-in-the-Box"},
+    ["Satchel"] = {"Default", "Suspicous Gift", "Advanced Satchel"},
     ["Subspace Tripmine"] = {"Default", "Don't Press", "Spring", "Trick or Treat"}
 }
 
@@ -535,6 +542,8 @@ local SkinTab = Window:MakeTab({
     PremiumOnly = false
 })
 
+SkinTab:AddParagraph("⚠️ WARNING ⚠️", "Some skins might glitch/break the game.")
+
 local MiscTab = Window:MakeTab({
     Name = "Misc",
     PremiumOnly = false
@@ -587,6 +596,8 @@ StretchSection:AddSlider({
     end
 })
 
+StretchSection:AddParagraph("⚠️ WARNING ⚠️", "Stretch resolution might mess up ESP.")
+
 TriggerbotTab:AddToggle({
     Name = "Enable Triggerbot",
     Default = false,
@@ -637,7 +648,7 @@ TriggerbotTab:AddToggle({
     end
 })
 
-TriggerbotTab:AddParagraph("⚠️ WARNING ⚠️", "Use Spray/Automatic weapons while right clicking might not work some times.")
+TriggerbotTab:AddParagraph("⚠️ WARNING ⚠️", "While holding right click triggerbot might not work some times.")
 
 TriggerbotTab:AddSlider({
     Name = "Delay (ms)",
@@ -870,44 +881,34 @@ local function isTeammate(player)
     return false
 end
 
-local isFiring = false
-local isTargetValid = false
+local lastFireTime = 0
+local fireDelay = 0.05 -- Adjust for fire rate control
 
 local function checkTriggerbot()
+    local currentTime = time()
+    
     if not settings.triggerbot_enabled then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     if settings.triggerbot_require_rightclick and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     local target = Mouse.Target
     if not target then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     local character = target.Parent
     if not character then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
@@ -918,58 +919,50 @@ local function checkTriggerbot()
     else
         targetPart = character:FindFirstChild(settings.triggerbot_target)
     end
+    
     if not targetPart then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     local player = game:GetService("Players"):GetPlayerFromCharacter(character)
     if not player or player == LocalPlayer then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     if settings.triggerbot_team_check and isTeammate(player) then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     if settings.triggerbot_alive_check and not is_player_alive(player) then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     if settings.triggerbot_wall_check and is_wall_between(Camera.CFrame.Position, targetPart.Position) then
-        if isFiring then
-            mouse1release()
-            isFiring = false
-        end
+        isFiring = false
         isTargetValid = false
         return
     end
     
     isTargetValid = true
     
-    if isTargetValid and not isFiring then
-        task.wait(settings.triggerbot_delay)
-        mouse1press()
-        isFiring = true
+    if isTargetValid then
+        if currentTime - lastFireTime >= fireDelay then
+            task.spawn(function()
+                if settings.triggerbot_delay > 0 then
+                    task.wait(settings.triggerbot_delay)
+                end
+                mouse1click()
+            end)
+            lastFireTime = currentTime
+        end
     end
 end
 
@@ -979,6 +972,36 @@ RunService.Heartbeat:Connect(function()
     if currentTime - lastCheck >= 0.01 then
         checkTriggerbot()
         lastCheck = currentTime
+    end
+end)
+
+local function updateESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            pcall(function()
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                    
+                    if distance <= 500 then
+                        if not ESPTable[player] then
+                            CreateESP(player)
+                        else
+                            if ESPTable[player].ESP then
+                                ESPTable[player].ESP.SetText(settings.esp_names and GetDisplayText(player) or "")
+                            end
+                        end
+                    else
+                        RemoveESP(player)
+                    end
+                end
+            end)
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if settings.esp_enabled then
+        updateESP()
     end
 end)
 
