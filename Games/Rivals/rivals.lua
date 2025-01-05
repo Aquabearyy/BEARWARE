@@ -50,18 +50,38 @@ local connections = {
     smoke = {},
 }
 
+local function GetHealthColor(health, maxHealth)
+    local healthPercent = health/maxHealth
+
+    if healthPercent > 0.75 then
+        return Color3.fromRGB(0, 255, 0) 
+    elseif healthPercent > 0.50 then
+        return Color3.fromRGB(255, 255, 0)
+    elseif healthPercent > 0.25 then
+        return Color3.fromRGB(255, 125, 0)
+    else
+        return Color3.fromRGB(255, 0, 0)
+    end
+end
+
 local function GetDisplayText(player)
     if not player or not player.Character then return "" end
     
     local text = {}
     local humanoid = player.Character:FindFirstChild("Humanoid")
-    
+
     if settings.esp_names then
         table.insert(text, player.Name)
     end
     
     if settings.show_health and humanoid then
-        local healthText = string.format("<font color='rgb(0,255,0)'>[%.0f]</font>", humanoid.Health)
+        local healthColor = GetHealthColor(humanoid.Health, humanoid.MaxHealth)
+        local colorHex = string.format("#%.2x%.2x%.2x", 
+            math.floor(healthColor.R * 255),
+            math.floor(healthColor.G * 255),
+            math.floor(healthColor.B * 255)
+        )
+        local healthText = string.format("<font color='%s'>[%.0f]</font>", colorHex, humanoid.Health)
         table.insert(text, healthText)
     end
     
