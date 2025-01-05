@@ -1,3 +1,7 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/sxlent404/ModdedOrion/main/source.lua')))()
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/MS-ESP/refs/heads/main/source.lua"))()
 local RunService = game:GetService("RunService")
@@ -8,7 +12,7 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assetFolder = ReplicatedStorage:WaitForChild("Assets")
+local assetFolder = game:GetService("Players").LocalPlayer.PlayerScripts.Assets.ViewModels
 local activeWeapons = {}
 
 local settings = {
@@ -48,11 +52,20 @@ local connections = {
 
 local function GetDisplayText(player)
     if not player or not player.Character then return "" end
-    local text = player.Name
-    if settings.show_health and player.Character and player.Character:FindFirstChild("Humanoid") then
-        text = string.format("%s [%.1f]", text, player.Character.Humanoid.Health)
+    
+    local text = {}
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    
+    if settings.esp_names then
+        table.insert(text, player.Name)
     end
-    return text
+    
+    if settings.show_health and humanoid then
+        local healthText = string.format("<font color='rgb(0,255,0)'>[%.0f]</font>", humanoid.Health)
+        table.insert(text, healthText)
+    end
+    
+    return table.concat(text, " ")
 end
 
 local function RemoveESP(player)
@@ -70,24 +83,33 @@ local function RemoveESP(player)
 end
 
 local function CreateESP(player)
-    if not player or not player.Character then return end
-    if not player.Character:FindFirstChild("HumanoidRootPart") then return end
-    if not player.Character:FindFirstChild("Humanoid") then return end
-    if player.Character.Humanoid.Health <= 0 then return end
+    if not player then return end
     
-    local distance = (player.Character.HumanoidRootPart.Position - Camera.CFrame.Position).Magnitude
-    if distance > MAX_DISTANCE then return end
+    RemoveESP(player)
     
-    pcall(function()
+    ESPTable[player] = {
+        ESP = nil,
+        Connections = {}
+    }
+    
+    local function setupESP()
+        local character = player.Character
+        if not character then return end
+        
+        local humanoid = character:WaitForChild("Humanoid", 2)
+        local rootPart = character:WaitForChild("HumanoidRootPart", 2)
+        if not humanoid or not rootPart then return end
+        
         local playerEsp = ESPLibrary.ESP.Highlight({
-            Name = settings.esp_names and GetDisplayText(player) or "",
-            Model = player.Character,
+            Name = GetDisplayText(player),
+            Model = character,
             FillColor = settings.esp_fill_color,
             OutlineColor = settings.esp_outline_color,
             TextColor = settings.esp_text_color,
             TextSize = settings.esp_text_size,
             FillTransparency = settings.esp_fill_transparency,
             OutlineTransparency = settings.esp_outline_transparency,
+            RichText = true,
             Tracer = {
                 Enabled = settings.esp_tracers,
                 From = settings.tracer_origin,
@@ -95,21 +117,23 @@ local function CreateESP(player)
             }
         })
         
-        ESPTable[player] = {
-            ESP = playerEsp,
-            Connections = {}
-        }
+        ESPTable[player].ESP = playerEsp
         
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            ESPTable[player].Connections.HealthChanged = player.Character.Humanoid.HealthChanged:Connect(function(newHealth)
-                if newHealth > 0 then
-                    playerEsp.SetText(GetDisplayText(player))
-                else
-                    HandleCharacter(player)
-                end
-            end)
-        end
-    end)
+        ESPTable[player].Connections.HealthChanged = humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+            if playerEsp then
+                playerEsp.SetText(GetDisplayText(player))
+            end
+        end)
+        
+        ESPTable[player].Connections.DisplayNameChanged = player:GetPropertyChangedSignal("DisplayName"):Connect(function()
+            if playerEsp then
+                playerEsp.SetText(GetDisplayText(player))
+            end
+        end)
+    end
+    
+    setupESP()
+    ESPTable[player].Connections.CharacterAdded = player.CharacterAdded:Connect(setupESP)
 end
 
 local function HandleCharacter(player)
@@ -154,22 +178,22 @@ end
 
 local function swapWeaponSkins(normalWeaponName, skinName)
     if not normalWeaponName then return end
-    local success, result = pcall(function()
-        local normalWeapon = assetFolder:FindFirstChild(normalWeaponName)
-        if not normalWeapon then return end
-        if skinName then
-            local skin = assetFolder:FindFirstChild(skinName)
-            if not skin then return end
-            normalWeapon:ClearAllChildren()
-            for _, child in pairs(skin:GetChildren()) do
-                local newChild = child:Clone()
-                newChild.Parent = normalWeapon
-            end
-            activeWeapons[normalWeaponName] = true
+    
+    local normalWeapon = assetFolder:FindFirstChild(normalWeaponName)
+    if not normalWeapon then return end
+    
+    if skinName and skinName ~= "Default" then
+        local skin = assetFolder:FindFirstChild(skinName)
+        if not skin then return end
+        
+        normalWeapon:ClearAllChildren()
+        for _, child in pairs(skin:GetChildren()) do
+            local newChild = child:Clone()
+            newChild.Parent = normalWeapon
         end
-    end)
-    if not success then
-        warn("Failed to swap weapon skin:", result)
+        activeWeapons[normalWeaponName] = true
+    else
+        activeWeapons[normalWeaponName] = nil
     end
 end
 
@@ -544,6 +568,82 @@ local SkinTab = Window:MakeTab({
 
 SkinTab:AddParagraph("⚠️ WARNING ⚠️", "Some skins might glitch/break the game.")
 
+local PrimarySection = SkinTab:AddSection({
+    Name = "Primary Weapons"
+})
+
+for _, weapon in pairs(primaryWeapons) do
+    if weaponSkins[weapon] then
+        PrimarySection:AddDropdown({
+            Name = weapon,
+            Default = "Default",
+            Options = weaponSkins[weapon],
+            Flag = weapon .. "Skin",
+            Save = true,
+            Callback = function(Value)
+                swapWeaponSkins(weapon, Value)
+            end
+        })
+    end
+end
+
+local SecondarySection = SkinTab:AddSection({
+    Name = "Secondary Weapons"
+})
+
+for _, weapon in pairs(secondaryWeapons) do
+    if weaponSkins[weapon] then
+        SecondarySection:AddDropdown({
+            Name = weapon,
+            Default = "Default",
+            Options = weaponSkins[weapon],
+            Flag = weapon .. "Skin",
+            Save = true,
+            Callback = function(Value)
+                swapWeaponSkins(weapon, Value)
+            end
+        })
+    end
+end
+
+local MeleeSection = SkinTab:AddSection({
+    Name = "Melee Weapons"
+})
+
+for _, weapon in pairs(meleeWeapons) do
+    if weaponSkins[weapon] then
+        MeleeSection:AddDropdown({
+            Name = weapon,
+            Default = "Default",
+            Options = weaponSkins[weapon],
+            Flag = weapon .. "Skin",
+            Save = true,
+            Callback = function(Value)
+                swapWeaponSkins(weapon, Value)
+            end
+        })
+    end
+end
+
+local UtilitySection = SkinTab:AddSection({
+    Name = "Utility Items"
+})
+
+for _, weapon in pairs(utilityWeapons) do
+    if weaponSkins[weapon] then
+        UtilitySection:AddDropdown({
+            Name = weapon,
+            Default = "Default",
+            Options = weaponSkins[weapon],
+            Flag = weapon .. "Skin",
+            Save = true,
+            Callback = function(Value)
+                swapWeaponSkins(weapon, Value)
+            end
+        })
+    end
+end
+
 local MiscTab = Window:MakeTab({
     Name = "Misc",
     PremiumOnly = false
@@ -762,22 +862,6 @@ AntiSection:AddToggle({
     end
 })
 
-local PrimarySection = SkinTab:AddSection({
-    Name = "Primary Weapons"
-})
-
-local SecondarySection = SkinTab:AddSection({
-    Name = "Secondary Weapons"
-})
-
-local MeleeSection = SkinTab:AddSection({
-    Name = "Melee Weapons"
-})
-
-local UtilitySection = SkinTab:AddSection({
-    Name = "Utility Items"
-})
-
 MiscTab:AddToggle({
     Name = "Save Settings",
     Default = true,
@@ -795,74 +879,6 @@ MiscTab:AddToggle({
         end
     end    
 })
-
-for _, weapon in pairs(primaryWeapons) do
-    if weaponSkins[weapon] then
-        PrimarySection:AddDropdown({
-            Name = weapon,
-            Default = "Default",
-            Options = weaponSkins[weapon],
-            Flag = weapon .. "Skin",
-            Save = true,
-            Callback = function(Value)
-                if Value ~= "Default" then
-                    swapWeaponSkins(weapon, Value)
-                end
-            end
-        })
-    end
-end
-
-for _, weapon in pairs(secondaryWeapons) do
-    if weaponSkins[weapon] then
-        SecondarySection:AddDropdown({
-            Name = weapon,
-            Default = "Default",
-            Options = weaponSkins[weapon],
-            Flag = weapon .. "Skin",
-            Save = true,
-            Callback = function(Value)
-                if Value ~= "Default" then
-                    swapWeaponSkins(weapon, Value)
-                end
-            end
-        })
-    end
-end
-
-for _, weapon in pairs(meleeWeapons) do
-    if weaponSkins[weapon] then
-        MeleeSection:AddDropdown({
-            Name = weapon,
-            Default = "Default",
-            Options = weaponSkins[weapon],
-            Flag = weapon .. "Skin",
-            Save = true,
-            Callback = function(Value)
-                if Value ~= "Default" then
-                    swapWeaponSkins(weapon, Value)
-                end
-            end
-        })
-    end
-end
-
-for _, weapon in pairs(utilityWeapons) do
-    if weaponSkins[weapon] then
-        UtilitySection:AddDropdown({
-            Name = weapon,
-            Default = "Default",
-            Options = weaponSkins[weapon],
-            Flag = weapon .. "Skin",
-            Save = true,
-            Callback = function(Value)
-                if Value ~= "Default" then
-                    swapWeaponSkins(weapon, Value)
-                end
-            end
-        })
-    end
-end
 
 local function isTeammate(player)
     local character = workspace:FindFirstChild(player.Name)
@@ -882,7 +898,7 @@ local function isTeammate(player)
 end
 
 local lastFireTime = 0
-local fireDelay = 0.05 -- Adjust for fire rate control
+local fireDelay = 0.05
 
 local function checkTriggerbot()
     local currentTime = time()
@@ -1000,8 +1016,42 @@ local function updateESP()
 end
 
 RunService.RenderStepped:Connect(function()
-    if settings.esp_enabled then
-        updateESP()
+    if not settings.esp_enabled then return end
+    
+    for player, espData in pairs(ESPTable) do
+        if espData.ESP and player.Character and player.Character:FindFirstChild("Humanoid") then
+            espData.ESP.SetText(GetDisplayText(player))
+        end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not settings.esp_enabled then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        local success, err = pcall(function()
+            local character = player.Character
+            if not character then return end
+            
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            if not rootPart then return end
+            
+            local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
+            
+            if distance <= MAX_DISTANCE then
+                if not ESPTable[player] then
+                    CreateESP(player)
+                end
+            else
+                RemoveESP(player)
+            end
+        end)
+        
+        if not success then
+            warn("ESP Update Error:", err)
+        end
     end
 end)
 
