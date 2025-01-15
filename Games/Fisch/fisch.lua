@@ -1,145 +1,107 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Config = {}
-local AllFuncs = {}
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local PlayerGui = LocalPlayer.PlayerGui
-local Backpack = LocalPlayer.Backpack
-local Lighting = game:GetService("Lighting")
+local scriptName = "Bear Hub - Fisch | " .. identifyexecutor()
 
-local Window = OrionLib:MakeWindow({
-    Name = "Bear Hub | ".. identifyexecutor(),
-    HidePremium = false,
-    SaveConfig = false, 
-    ConfigFolder = "FishingScript",
-    IntroEnabled = false
+if getgenv().BearHubFischLoaded then
+    return
+end
+getgenv().BearHubFischLoaded = true
+
+local repo = "https://raw.githubusercontent.com/deividcomsono/LinoriaLib/refs/heads/main/"
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+local Window = Library:CreateWindow({
+    Title = scriptName,
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0
 })
 
-local MainTab = Window:MakeTab({
-    Name = "Main"
-})
+Library.ShowCustomCursor = false
 
-local VisualsTab = Window:MakeTab({
-    Name = "Visuals"
-})
+local Tabs = {
+    Main = Window:AddTab("Main"),
+    ["UI Settings"] = Window:AddTab("UI Settings")
+}
 
-local TeleportTab = Window:MakeTab({
-    Name = "Teleports"
-})
+local MoneyGroupBox = Tabs.Main:AddLeftGroupbox("Money")
+local PlayerGroupBox = Tabs.Main:AddLeftGroupbox("Player")
+local AutosGroupBox = Tabs.Main:AddRightGroupbox("Auto's")
 
-local PlayerTab = Window:MakeTab({
-    Name = "Player"
-})
+local fireEventEnabled = false
+local fireEventCount = 1
+local connection
 
-AllFuncs['Farm Fish'] = function()
-    local RodName = ReplicatedStorage.playerstats[LocalPlayer.Name].Stats.rod.Value
-    while Config['Farm Fish'] and task.wait() do
-        if Backpack:FindFirstChild(RodName) then
-            LocalPlayer.Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
+local function startLoop()
+    if connection then
+        connection:Disconnect()
+    end
+    connection = game:GetService('RunService').Stepped:Connect(function()
+        for i = 1, fireEventCount do
+            game:GetService("ReplicatedStorage").packages.Net["RE/DailyReward/Claim"]:FireServer()
         end
-        if LocalPlayer.Character:FindFirstChild(RodName) and LocalPlayer.Character:FindFirstChild(RodName):FindFirstChild("bobber") then
-            local XyzClone = game:GetService("ReplicatedStorage").resources.items.items.GPS.GPS.gpsMain.xyz:Clone()
-            XyzClone.Parent = game.Players.LocalPlayer.PlayerGui:WaitForChild("hud"):WaitForChild("safezone"):WaitForChild("backpack")
-            XyzClone.Name = "Lure"
-            XyzClone.Text = "<font color='#ff4949'>Lure </font>: 0%"
-            repeat
-                pcall(function()
-                    PlayerGui:FindFirstChild("shakeui").safezone:FindFirstChild("button").Size = UDim2.new(1001, 0, 1001, 0)
-                    game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
-                    game:GetService("VirtualUser"):Button1Up(Vector2.new(1, 1))
-                end)
-                XyzClone.Text = "<font color='#ff4949'>Lure </font>: "..tostring(math.floor(LocalPlayer.Character:FindFirstChild(RodName).values.lure.Value * 100) / 100).."%"
-                RunService.Heartbeat:Wait()
-            until not LocalPlayer.Character:FindFirstChild(RodName) or LocalPlayer.Character:FindFirstChild(RodName).values.bite.Value or not Config['Farm Fish']
-            XyzClone.Text = "<font color='#ff4949'>FISHING!</font>"
-            delay(1.5, function()
-                XyzClone:Destroy()
-            end)
-            repeat
-                ReplicatedStorage.events.reelfinished:FireServer(1000000000000000000000000, true)
-                task.wait(.5)
-            until not LocalPlayer.Character:FindFirstChild(RodName) or not LocalPlayer.Character:FindFirstChild(RodName).values.bite.Value or not Config['Farm Fish']
-        else
-            if Config['Anchor'] and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.Anchored = false
-                task.wait(0.1)
-            end
-            
-            LocalPlayer.Character:FindFirstChild(RodName).events.cast:FireServer(1000000000000000000000000)
-            task.wait(2)
-            
-            if Config['Anchor'] and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.Anchored = true
-            end
-        end
+    end)
+end
+
+local function stopLoop()
+    if connection then
+        connection:Disconnect()
+        connection = nil
     end
 end
 
-MainTab:AddToggle({
-    Name = "Auto Farm Fish",
+MoneyGroupBox:AddToggle("FireEventToggle", {
+    Text = "Enable Auto Claim",
     Default = false,
-    Flag = "AutoFarm",
-    Save = true,
     Callback = function(Value)
-        Config['Farm Fish'] = Value
+        fireEventEnabled = Value
         if Value then
-            task.spawn(AllFuncs['Farm Fish'])
-        end
-    end
-})
-
-MainTab:AddToggle({
-    Name = "Anchor Character",
-    Default = false,
-    Flag = "Anchor",
-    Save = true,
-    Callback = function(Value)
-        Config['Anchor'] = Value
-        if Value then
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.Anchored = true
-            end
+            startLoop()
         else
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.Anchored = false
-            end
+            stopLoop()
         end
     end
 })
 
-PlayerTab:AddToggle({
-    Name = "Infinite Oxygen",
-    Default = false,
-    Flag = "InfiniteOxygen", 
-    Save = true,
+MoneyGroupBox:AddSlider("FireEventCount", {
+    Text = "Claims per Step",
+    Default = 1,
+    Min = 1,
+    Max = 250,
+    Rounding = 0,
     Callback = function(Value)
-        LocalPlayer.Character.client.oxygen.Disabled = Value
-    end    
-})
-
-PlayerTab:AddSlider({
-    Name = "Walk Speed",
-    Min = 16,
-    Max = 500,
-    Default = 16,
-    Increment = 1,
-    Flag = "WalkSpeed",
-    Save = true,
-    Callback = function(Value)
-        LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        fireEventCount = Value
+        if fireEventEnabled then
+            startLoop()
+        end
     end
 })
 
-PlayerTab:AddToggle({
-    Name = "Walk on Water",
+MoneyGroupBox:AddToggle("DisableAnnouncementsUIs", {
+    Text = "Disable Notification UI.",
+    Tooltip = "Less lag.",
     Default = false,
-    Flag = "WalkOnWater",
-    Save = true,
     Callback = function(Value)
-        for i,v in pairs(workspace.zones.fishing:GetChildren()) do
+        if Value then
+            game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.announcements.Visible = false
+            game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.StatChangeList.Visible = false
+        else
+            game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.announcements.Visible = true
+            game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.StatChangeList.Visible = true
+        end
+    end
+})
+
+local walkOnWaterEnabled = false
+local originalGravity
+
+PlayerGroupBox:AddToggle("WalkOnWaterToggle", {
+    Text = "Walk on Water",
+    Default = false,
+    Callback = function(Value)
+        walkOnWaterEnabled = Value
+        for _, v in pairs(game:GetService("Workspace").zones.fishing:GetChildren()) do
             if v.Name == "Ocean" then
                 v.CanCollide = Value
             end
@@ -147,135 +109,255 @@ PlayerTab:AddToggle({
     end
 })
 
-PlayerTab:AddToggle({
-    Name = "No Clip",
+local noFogEnabled = false
+local originalFogProperties = {}
+
+PlayerGroupBox:AddToggle("NoFogToggle", {
+    Text = "No Fog",
     Default = false,
-    Flag = "NoClip",
-    Save = true,
     Callback = function(Value)
-        if Value then
-            RunService.Stepped:Connect(function()
-                if LocalPlayer.Character then
-                    for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.CanCollide = false
-                        end
-                    end
+        noFogEnabled = Value
+        local lighting = game:GetService("Lighting")
+        
+        if noFogEnabled then
+            originalFogProperties.FogEnd = lighting.FogEnd
+            originalFogProperties.FogStart = lighting.FogStart
+            originalFogProperties.FogColor = lighting.FogColor
+
+            lighting.FogEnd = 100000
+            lighting.FogStart = 0
+            lighting.FogColor = Color3.new(1, 1, 1)
+
+            for _, atmosphere in pairs(lighting:GetDescendants()) do
+                if atmosphere:IsA("Atmosphere") then
+                    atmosphere:Destroy()
                 end
-            end)
+            end
+        else
+            lighting.FogEnd = originalFogProperties.FogEnd or 1000
+            lighting.FogStart = originalFogProperties.FogStart or 0
+            lighting.FogColor = originalFogProperties.FogColor or Color3.new(1, 1, 1)
         end
     end
 })
 
-PlayerTab:AddButton({
-    Name = "Rejoin Server",
-    Callback = function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+local fullbrightEnabled = false
+local originalLightingProperties = {}
+local brightLoop = nil
+
+PlayerGroupBox:AddToggle("FullbrightToggle", {
+    Text = "Fullbright",
+    Default = false,
+    Callback = function(Value)
+        fullbrightEnabled = Value
+        local lighting = game:GetService("Lighting")
+        local runService = game:GetService("RunService")
+
+        if Value then
+            originalLightingProperties.Ambient = lighting.Ambient
+            originalLightingProperties.Brightness = lighting.Brightness
+            originalLightingProperties.GlobalShadows = lighting.GlobalShadows
+            originalLightingProperties.ClockTime = lighting.ClockTime
+            originalLightingProperties.FogEnd = lighting.FogEnd
+            originalLightingProperties.OutdoorAmbient = lighting.OutdoorAmbient
+
+            local function brightFunc()
+                lighting.Brightness = 2
+                lighting.ClockTime = 14
+                lighting.FogEnd = 100000
+                lighting.GlobalShadows = false
+                lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+            end
+
+            brightLoop = runService.RenderStepped:Connect(brightFunc)
+        else
+            if brightLoop then
+                brightLoop:Disconnect()
+                brightLoop = nil
+            end
+
+            lighting.Ambient = originalLightingProperties.Ambient or Color3.new(0.5, 0.5, 0.5)
+            lighting.Brightness = originalLightingProperties.Brightness or 1
+            lighting.GlobalShadows = originalLightingProperties.GlobalShadows or true
+            lighting.ClockTime = originalLightingProperties.ClockTime or 14
+            lighting.FogEnd = originalLightingProperties.FogEnd or 100000
+            lighting.OutdoorAmbient = originalLightingProperties.OutdoorAmbient or Color3.fromRGB(128, 128, 128)
+        end
     end
 })
 
-local TeleportLocations = {
-    ["Moosewood"] = Vector3.new(473.989990, 150.940002, 254.020004),
-    ["Roslit Bay"] = Vector3.new(-1695.300049, 148.000000, 739.239990),
-    ["Roslit Hamlet"] = Vector3.new(-1469.050049, 132.529999, 711.000000),
-    ["Roslit Volcano"] = Vector3.new(-1962.729980, 166.080002, 284.820007),
-    ["Mushgrove Swamp"] = Vector3.new(2442.810059, 130.899994, -686.159973),
-    ["Terrapin Island"] = Vector3.new(-161.610001, 145.039993, 1939.359985),
-    ["Snowcap Island"] = Vector3.new(2606.929932, 135.279999, 2397.350098),
-    ["Sunstone Island"] = Vector3.new(-923.770020, 135.490005, -1126.890015),
-    ["Forsaken Shores"] = Vector3.new(-2587.719971, 148.750000, 1643.510010),
-    ["Forsaken Shores (XP)"] = Vector3.new(-2674.560059, 164.750000, 1760.209961),
-    ["Statue Of Sovereignty"] = Vector3.new(45.060001, 132.380005, -1013.830017),
-    ["Sovereginty Mines"] = Vector3.new(-27.950001, 136.490005, -1121.439941),
-    ["Keepers Altar"] = Vector3.new(1296.560059, -805.289978, -298.609985),
-    ["Vertigo"] = Vector3.new(-115.620003, -515.299988, 1024.540039),
-    ["The Depths"] = Vector3.new(949.099976, -711.659973, 1248.369995),
-    ["Desolate Deep"] = Vector3.new(-1656.400024, -214.190002, -2855.570068),
-    ["Desolate Pocket"] = "Soon",
-    ["Brine Pool"] = "Soon",
-    ["Ancient Isle"] = Vector3.new(6059.620117, 195.279999, 281.369995),
-    ["Ancient Isle (Fish)"] = Vector3.new(5800.850098, 135.300003, 406.809998),
-    ["Ancient Archives"] = "Soon",
-    ["The Ocean"] = Vector3.new(1447.849976, 135.000000, -7649.649902),
-    ["Deep Ocean"] = "Soon", 
-    ["Earmark Island"] = "Soon",
-    ["Haddock Rock"] = "Soon",
-    ["The Arch"] = Vector3.new(1007.799988, 131.320007, -1238.900024),
-    ["Birch Cay"] = "Soon",
-    ["Harvesters Spike"] = "Soon",
-    ["Northern Expedition"] = Vector3.new(19537.759766, 132.669998, 5295.939941)
-}
+local infiniteOxygenEnabled = false
 
-local locations = {}
-for location, _ in pairs(TeleportLocations) do
-    table.insert(locations, location)
+PlayerGroupBox:AddToggle("InfiniteOxygenToggle", {
+    Text = "Infinite Oxygen",
+    Default = false,
+    Callback = function(Value)
+        infiniteOxygenEnabled = Value
+        local character = game:GetService("Players").LocalPlayer.Character
+        if character and character:FindFirstChild("client") and character.client:FindFirstChild("oxygen") then
+            character.client.oxygen.Disabled = Value
+        end
+    end
+})
+
+local autoFishEnabled = false
+local autoCastEnabled = false
+local autoReelEnabled = false
+local autoShakeEnabled = false
+local showLurePercentEnabled = false
+
+local function autoFish()
+    while autoFishEnabled do
+        local RodName = game:GetService("ReplicatedStorage").playerstats[game.Players.LocalPlayer.Name].Stats.rod.Value
+        local Backpack = game.Players.LocalPlayer.Backpack
+        local Character = game.Players.LocalPlayer.Character
+        local PlayerGui = game.Players.LocalPlayer.PlayerGui
+
+        if Backpack and Backpack:FindFirstChild(RodName) then
+            Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
+        end
+
+        if Character and Character:FindFirstChild(RodName) and Character:FindFirstChild(RodName):FindFirstChild("bobber") then
+            local XyzClone = game:GetService("ReplicatedStorage").resources.items.items.GPS.GPS.gpsMain.xyz:Clone()
+            XyzClone.Parent = PlayerGui.hud.safezone.backpack
+            XyzClone.Name = "Lure"
+            XyzClone.Text = "<font color='#ff4949'>Lure </font>: 0%"
+
+            repeat
+                if autoShakeEnabled then
+                    pcall(function()
+                        PlayerGui.shakeui.safezone.button.Size = UDim2.new(1001, 0, 1001, 0)
+                        game:GetService("VirtualUser"):Button1Down(Vector2.new(1, 1))
+                        game:GetService("VirtualUser"):Button1Up(Vector2.new(1, 1))
+                    end)
+                end
+
+                if showLurePercentEnabled then
+                    XyzClone.Text = "<font color='#ff4949'>Lure </font>: " .. tostring(math.floor(Character:FindFirstChild(RodName).values.lure.Value * 100) / 100) .. "%"
+                end
+
+            until not Character or not Character:FindFirstChild(RodName) or not Character:FindFirstChild(RodName).values.bite.Value or not autoFishEnabled
+
+            XyzClone:Destroy()
+
+            if autoReelEnabled then
+                repeat
+                    pcall(function()
+                        task.wait()
+                        game:GetService("ReplicatedStorage").events.reelfinished:FireServer(1000000000000000000000000, true)
+                        task.wait()
+                    end)
+                until not Character or not Character:FindFirstChild(RodName) or not Character:FindFirstChild(RodName).values.bite.Value or not autoFishEnabled
+            end
+        else
+            if autoCastEnabled and Character and Character:FindFirstChild(RodName) then
+                pcall(function()
+                    Character:FindFirstChild(RodName).events.cast:FireServer(1000000000000000000000000)
+                end)
+            end
+        end
+
+        task.wait()
+    end
 end
 
-TeleportTab:AddDropdown({
-    Name = "Select Location",
-    Default = "The Ocean",
-    Options = locations,
-    Callback = function(Value)
-        Config['SelectedLocation'] = Value
-    end    
-})
-
-TeleportTab:AddButton({
-    Name = "Teleport",
-    Callback = function()
-        if Config['SelectedLocation'] and TeleportLocations[Config['SelectedLocation']] then
-            if TeleportLocations[Config['SelectedLocation']] == "Soon" then
-                OrionLib:MakeNotification({
-                    Name = "Teleport Failed",
-                    Content = "This location is coming soon!",
-                    Image = "rbxassetid://4483345998",
-                    Time = 5
-                })
-                return
-            end
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(TeleportLocations[Config['SelectedLocation']])
-        end
-    end
-})
-
-VisualsTab:AddToggle({
-    Name = "Remove Fog",
+AutosGroupBox:AddToggle("AutoFishToggle", {
+    Text = "Auto Fish",
     Default = false,
-    Flag = "RemoveFog",
-    Save = true,
     Callback = function(Value)
+        autoFishEnabled = Value
         if Value then
-            if game:GetService("Lighting"):FindFirstChild("Sky") then
-                game:GetService("Lighting"):FindFirstChild("Sky").Parent = game:GetService("Lighting").bloom
-            end
-        else
-            if game:GetService("Lighting").bloom:FindFirstChild("Sky") then
-                game:GetService("Lighting").bloom:FindFirstChild("Sky").Parent = game:GetService("Lighting")
-            end
+            autoFish()
         end
     end
 })
 
-VisualsTab:AddToggle({
-    Name = "Full Bright",
+AutosGroupBox:AddToggle("AutoCastToggle", {
+    Text = "Auto Cast",
     Default = false,
-    Flag = "FullBright",
-    Save = true,
     Callback = function(Value)
-        if Value then
-            Lighting.Brightness = 2
-            Lighting.ClockTime = 14
-            Lighting.FogEnd = 100000
-            Lighting.GlobalShadows = false
-            Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+        autoCastEnabled = Value
+    end
+})
+
+AutosGroupBox:AddToggle("AutoReelToggle", {
+    Text = "Auto Reel",
+    Default = false,
+    Callback = function(Value)
+        autoReelEnabled = Value
+    end
+})
+
+AutosGroupBox:AddToggle("AutoShakeToggle", {
+    Text = "Auto Shake",
+    Default = false,
+    Callback = function(Value)
+        autoShakeEnabled = Value
+    end
+})
+
+AutosGroupBox:AddToggle("ShowLurePercentToggle", {
+    Text = "Show Lure Percent",
+    Default = false,
+    Callback = function(Value)
+        showLurePercentEnabled = Value
+    end
+})
+
+local walkSpeedEnabled = false
+local walkSpeedValue = 16
+local originalWalkSpeed
+
+PlayerGroupBox:AddToggle("WalkSpeedToggle", {
+    Text = "Enable WalkSpeed",
+    Default = false,
+    Callback = function(Value)
+        walkSpeedEnabled = Value
+        if walkSpeedEnabled then
+            originalWalkSpeed = game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed
+            game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = walkSpeedValue
         else
-            Lighting.Brightness = 1
-            Lighting.ClockTime = game:GetService("Lighting").TimeOfDay
-            Lighting.FogEnd = 10000
-            Lighting.GlobalShadows = true
-            Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+            game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = originalWalkSpeed or 16
         end
     end
 })
 
-OrionLib:Init()
+PlayerGroupBox:AddSlider("WalkSpeedSlider", {
+    Text = "WalkSpeed",
+    Default = 16,
+    Min = 16,
+    Max = 100,
+    Rounding = 0,
+    Callback = function(Value)
+        walkSpeedValue = Value
+        if walkSpeedEnabled then
+            game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = walkSpeedValue
+        end
+    end
+})
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+ThemeManager:SetFolder('BearHubFisch')
+SaveManager:SetFolder('BearHubFisch')
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+SaveManager:LoadAutoloadConfig()
+
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu")
+MenuGroup:AddLabel("Menu Keybind"):AddKeyPicker("MenuKeybind", {
+    Default = "End",
+    NoUI = true,
+    Text = "Menu Keybind"
+})
+
+Library.ToggleKeybind = Options.MenuKeybind
+
+Library:OnUnload(function()
+    stopLoop()
+    if stunCheckConnection then
+        stunCheckConnection:Disconnect()
+    end
+    print("UI unloaded!")
+end)
