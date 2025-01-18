@@ -15,5 +15,4 @@ Simple and powerful hub for popular Roblox games.
 loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/Bear-hub/main/loader.lua"))()
 ```
 
-## Contact 
-Discord: beary_v2
+Discord: aquabeary
