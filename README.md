@@ -16,5 +16,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/Bear-hub/ma
 ```
 
 ## DISCORD
-User: aquabeary
-Server: discord.gg/jSJr3qYMwU
+### User: aquabeary
+### Server: discord.gg/jSJr3qYMwU
