@@ -139,7 +139,7 @@ local function RefreshAllESP()
     end
 end
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/sxlent404/OrionLib/main/source.lua')))()
 local Window = OrionLib:MakeWindow({Name = "ESP", HidePremium = false})
 
 local MainTab = Window:MakeTab({
