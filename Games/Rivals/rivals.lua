@@ -1,8 +1,18 @@
+[[--
+  ____                    _    _       _     
+ |  _ \                  | |  | |     | |    
+ | |_) | ___  __ _ _ __  | |__| |_   _| |__  
+ |  _ < / _ \/ _` | '__| |  __  | | | | '_ \ 
+ | |_) |  __/ (_| | |    | |  | | |_| | |_) |
+ |____/ \___|\__,_|_|    |_|  |_|\__,_|_.__/ 
+
+--]]
+
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/sxlent404/OrionLib/main/source.lua')))()
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/sxlent404/temp/main/orionSource.lua')))()
 local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/temp/main/MS-ESP.lua"))()
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -311,12 +321,115 @@ Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
+local isLocked = false
+local targetPlayer = nil
+local highlight = nil
+
+local function createHighlight(target)
+    if highlight then highlight:Destroy() end
+    highlight = Instance.new("Highlight")
+    highlight.Parent = target.Character
+    highlight.Adornee = target.Character
+    highlight.FillColor = Color3.new(1, 0, 0)
+    highlight.OutlineColor = Color3.new(1, 1, 1)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+end
+
+local function removeHighlight()
+    if highlight then
+        highlight:Destroy()
+        highlight = nil
+    end
+end
+
+local function isOnSameTeam(otherPlayer)
+    if Players.LocalPlayer.Team and otherPlayer.Team then
+        return Players.LocalPlayer.Team == otherPlayer.Team
+    end
+    return false
+end
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= LocalPlayer and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            if not isOnSameTeam(otherPlayer) then
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = otherPlayer
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local function lockOntoClosestPlayer()
+    targetPlayer = getClosestPlayer()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        isLocked = true
+        createHighlight(targetPlayer)
+        RunService:BindToRenderStep("LockOnPlayer", Enum.RenderPriority.Camera.Value + 1, function()
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
+            else
+                isLocked = false
+                removeHighlight()
+                RunService:UnbindFromRenderStep("LockOnPlayer")
+            end
+        end)
+    end
+end
+
+local function unlockCamera()
+    isLocked = false
+    RunService:UnbindFromRenderStep("LockOnPlayer")
+    removeHighlight()
+    targetPlayer = nil
+end 
+
 local Window = OrionLib:MakeWindow({
     Name = "Bear Hub - Rivals | ".. identifyexecutor(),
     HidePremium = true,
     SaveConfig = true,
     IntroEnabled = false,
     ConfigFolder = "BearHub"
+})
+
+local LockOnTab = Window:MakeTab({
+    Name = "Aim",
+    PremiumOnly = false
+})
+
+LockOnTab:AddToggle({
+    Name = "Lock On",
+    Default = false,
+    Flag = "LockOnEnabled",
+    Save = true,
+    Callback = function(Value)
+        if not Value then
+            unlockCamera()
+        end
+    end
+})
+
+LockOnTab:AddBind({
+    Name = "Lock On Keybind",
+    Default = Enum.KeyCode.Q,
+    Flag = "LockOnKey", 
+    Save = true,
+    Callback = function()
+        if OrionLib.Flags["LockOnEnabled"].Value then
+            if isLocked then
+                unlockCamera()
+            else
+                lockOntoClosestPlayer()
+            end
+        end
+    end
 })
 
 local VisualsTab = Window:MakeTab({
@@ -669,10 +782,9 @@ local MiscTab = Window:MakeTab({
     PremiumOnly = false
 })
 
-local Camera = workspace.CurrentCamera
 local stretchConnection = nil
 local stretchEnabled = nil
-local stretchAmount = 0.2
+local stretchAmount = 0.8
 
 local StretchSection = MiscTab:AddSection({
     Name = "Stretch Resolution"
@@ -705,7 +817,7 @@ StretchSection:AddSlider({
     Name = "Stretch Amount",
     Min = 0.1,
     Max = 1,
-    Default = 0.2,
+    Default = 0.8,
     Color = Color3.fromRGB(255,255,255),
     Increment = 0.1,
     ValueName = "x",
