@@ -8,6 +8,8 @@ Simple and powerful hub for popular Roblox games.
 - Rivals (including Rivals FFA place)
 - Fisch
 - Arsenal
+- Build A Boat For Treasure
+- Shrimp Game
 
 ## Usage
 ```lua
