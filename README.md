@@ -8,7 +8,6 @@ Simple and powerful hub for popular Roblox games.
 - Rivals (including Rivals FFA place)
 - Fisch
 - Arsenal
-- Go Fishing
 
 ## Usage
 ```lua
