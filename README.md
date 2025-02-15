@@ -1,4 +1,4 @@
-# Bear Hub
+# BEARWARE
 
 Simple and powerful hub for popular Roblox games.
 
