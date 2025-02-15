@@ -33,10 +33,6 @@ local supportedGames = {
         name = "Arsenal",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Arsenal/arsenal.lua"
     },
-    [116605585218149] = {
-        name = "Go Fishing",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Go-Fishing/Go-Fishing.lua"
-    },
     [537413528] = {
         name = "Build A Boat For Treasure",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Build-A-Boat-For-Treasure/babft.lua"
