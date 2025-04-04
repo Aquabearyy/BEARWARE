@@ -1,20 +1,49 @@
 # BEARWARE
 
-Simple and powerful hub for popular Roblox games.
+### Simple and powerful hub for popular Roblox games.
 
-## Supported Games
-- Slap Battles (including slap royale)
-- KAT
-- Rivals (including Rivals FFA place)
-- Fisch
-- Arsenal
-- Build A Boat For Treasure
-- Shrimp Game
+# Supported Games
+- going on a full rework right now.
 
-## Usage
+# Usage
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/sxlent404/Bear-hub/main/loader.lua"))()
+print("BEARWARE Is currently unavaliable because of the rework")
 ```
 
-## DISCORD
-### User: aquabeary
+# Supported Executors
+**🟢 Working.
+🟡 Not Sure / Might work.
+🔴 Not working.**
+
+### PC EXECUTORS
+
+- **Bear-V3 - 🟢**
+- **Solara - 🟡**
+- **Xeno - 🟡**
+- **Cloudy - 🟡**
+- **AWP.GG - 🟡**
+- **Synapse Z - 🟡**
+- **Swift - 🟡**
+- **Wave - 🟡**
+- **Seliware - 🟡**
+- **JJSploit - 🟡**
+- **Zorara - 🟡**
+
+## MAC EXECUTORS
+
+- **Macsploit - 🟡**
+
+## ANDROID EXECUTORS
+
+- **Delta - 🟡**
+- **Codex - 🟡**
+- **Fluxus - 🟡**
+
+## IOS EXECUTORS
+
+- **Delta - 🟡**
+
+# SUPPORT
+
+### DISCORD
+**User: aquabeary**
