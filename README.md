@@ -28,6 +28,8 @@ print("BEARWARE Is currently unavaliable because of the rework")
 - **Seliware - 🟡**
 - **JJSploit - 🟡**
 - **Zorara - 🟡**
+- **Nezur - 🟡**
+- **Velocity - 🟡**
 
 ## MAC EXECUTORS
 
