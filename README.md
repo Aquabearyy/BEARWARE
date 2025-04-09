@@ -30,6 +30,12 @@ print("BEARWARE Is currently unavaliable because of the rework")
 - **Zorara - 🟡**
 - **Nezur - 🟡**
 - **Velocity - 🟡**
+- **Ronix - 🟡**
+- **Celery - 🟡**
+- **Argon - 🟡**
+- **Atlantis - 🟡**
+- **Lx63 - 🟡**
+- **SubZero / Fluxus - 🟡**
 
 ## MAC EXECUTORS
 
@@ -39,7 +45,8 @@ print("BEARWARE Is currently unavaliable because of the rework")
 
 - **Delta - 🟡**
 - **Codex - 🟡**
-- **Fluxus - 🟡**
+- **Fluxus / SubZero - 🟡**
+- **KRNL - 🟡**
 
 ## IOS EXECUTORS
 
