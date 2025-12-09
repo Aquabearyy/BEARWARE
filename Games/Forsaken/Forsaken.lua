@@ -738,8 +738,19 @@ local function SaveLightingSettings()
         for _, effect in ipairs(Lighting:GetChildren()) do
             if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or 
                effect:IsA("ColorCorrectionEffect") or effect:IsA("SunRaysEffect") or 
-               effect:IsA("DepthOfFieldEffect") or effect:IsA("Atmosphere") then
+               effect:IsA("DepthOfFieldEffect") then
                 originalLightingSettings.Effects[effect] = effect.Enabled
+            elseif effect:IsA("Atmosphere") then
+                -- Store Atmosphere properties separately since it doesn't have Enabled
+                originalLightingSettings.Atmosphere = {
+                    Instance = effect,
+                    Density = effect.Density,
+                    Offset = effect.Offset,
+                    Color = effect.Color,
+                    Decay = effect.Decay,
+                    Glare = effect.Glare,
+                    Haze = effect.Haze
+                }
             end
         end
         lightingRestored = true
@@ -749,7 +760,7 @@ end
 local function RestoreLightingSettings()
     if lightingRestored then
         for setting, value in pairs(originalLightingSettings) do
-            if setting ~= "Effects" then
+            if setting ~= "Effects" and setting ~= "Atmosphere" then
                 Lighting[setting] = value
             end
         end
@@ -757,6 +768,19 @@ local function RestoreLightingSettings()
         for effect, enabled in pairs(originalLightingSettings.Effects) do
             if effect and effect.Parent then
                 effect.Enabled = enabled
+            end
+        end
+        
+        -- Restore Atmosphere properties
+        if originalLightingSettings.Atmosphere then
+            local atmo = originalLightingSettings.Atmosphere
+            if atmo.Instance and atmo.Instance.Parent then
+                atmo.Instance.Density = atmo.Density
+                atmo.Instance.Offset = atmo.Offset
+                atmo.Instance.Color = atmo.Color
+                atmo.Instance.Decay = atmo.Decay
+                atmo.Instance.Glare = atmo.Glare
+                atmo.Instance.Haze = atmo.Haze
             end
         end
     end
@@ -776,8 +800,14 @@ RunService.RenderStepped:Connect(function()
         for _, effect in ipairs(Lighting:GetChildren()) do
             if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or 
                effect:IsA("ColorCorrectionEffect") or effect:IsA("SunRaysEffect") or 
-               effect:IsA("DepthOfFieldEffect") or effect:IsA("Atmosphere") then
+               effect:IsA("DepthOfFieldEffect") then
                 effect.Enabled = false
+            elseif effect:IsA("Atmosphere") then
+                -- Disable atmosphere effects by setting them to minimal values
+                effect.Density = 0
+                effect.Offset = 0
+                effect.Glare = 0
+                effect.Haze = 0
             end
         end
     end
