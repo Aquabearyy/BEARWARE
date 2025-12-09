@@ -8,6 +8,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -19,7 +20,13 @@ local wsCAConnection = nil
 local autoGenEnabled = false
 local genLoopRunning = false
 local hakariActive = false
-local quietActive = false
+local chanceAimbotActive = false
+local shedAimbotActive = false
+local guestAimbotActive = false
+local chanceAimbotLoop = nil
+local shedAimbotLoop = nil
+local guestAimbotLoop = nil
+local popupSolverActive = false
 
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     char = newChar
@@ -36,6 +43,21 @@ local ESPData = {
     trackedPlayers = {},
     trackedTools = {},
     trackedGens = {}
+}
+
+-- Aimbot sound IDs
+local chanceaimbotsounds = {
+    "rbxassetid://201858045",
+    "rbxassetid://139012439429121"
+}
+
+local shedaimbotsounds = {
+    "rbxassetid://12222225",
+    "rbxassetid://83851356262523"
+}
+
+local guestsounds = {
+    "rbxassetid://609342351"
 }
 
 -- Auto Generator Functions
@@ -74,9 +96,9 @@ end
 local function autoGeneratorLoop()
     genLoopRunning = true
     local debounce = {}
-    local delayTime = Options.GenDelay and Options.GenDelay.Value or 2.5
     
     while autoGenEnabled and genLoopRunning do
+        local delayTime = Options.GenDelay and Options.GenDelay.Value or 2.5
         task.wait()
         for _, v in pairs(Workspace.Map.Ingame.Map:GetChildren()) do
             if v.Name == "Generator" and autoGenEnabled then
@@ -99,6 +121,173 @@ local function autoGeneratorLoop()
         end
     end
     genLoopRunning = false
+end
+
+-- Popup Solver
+local VirtualInputManager = game:GetService('VirtualInputManager')
+
+local function solvePopups()
+    while popupSolverActive do
+        local player = LocalPlayer
+        local popups = player.PlayerGui.TemporaryUI:GetChildren()
+
+        for _, i in ipairs(popups) do
+            if i.Name == "1x1x1x1Popup" then
+                local centerX = i.AbsolutePosition.X + (i.AbsoluteSize.X / 2)
+                local centerY = i.AbsolutePosition.Y + (i.AbsoluteSize.Y / 2)
+
+                VirtualInputManager:SendMouseButtonEvent(centerX, centerY, Enum.UserInputType.MouseButton1.Value, true, player.PlayerGui, 1)
+                VirtualInputManager:SendMouseButtonEvent(centerX, centerY, Enum.UserInputType.MouseButton1.Value, false, player.PlayerGui, 1)
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
+-- Aimbot Functions
+local function chanceAimbot(state)
+    chanceAimbotActive = state
+    
+    if state then
+        if char.Name ~= "Chance" then
+            Library:Notify('Wrong Character - Must be Chance', 3)
+            Toggles.ChanceAimbot:SetValue(false)
+            return
+        end
+        
+        chanceAimbotLoop = char.HumanoidRootPart.ChildAdded:Connect(function(child)
+            if not chanceAimbotActive then return end
+            
+            for _, v in pairs(chanceaimbotsounds) do
+                if child.Name == v then
+                    local killer = Workspace.Players:FindFirstChild("Killers")
+                    if killer then
+                        killer = killer:FindFirstChildOfClass("Model")
+                        if killer and killer:FindFirstChild("HumanoidRootPart") then
+                            local killerHRP = killer.HumanoidRootPart
+                            local playerHRP = char:FindFirstChild("HumanoidRootPart")
+                            
+                            if playerHRP then
+                                local num = 1
+                                local maxIterations = 100
+                                
+                                while num <= maxIterations and chanceAimbotActive do
+                                    task.wait(0.01)
+                                    num = num + 1
+                                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, killerHRP.Position)
+                                    playerHRP.CFrame = CFrame.lookAt(playerHRP.Position, Vector3.new(killerHRP.Position.X, killerHRP.Position.Y, killerHRP.Position.Z))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        if chanceAimbotLoop then
+            chanceAimbotLoop:Disconnect()
+            chanceAimbotLoop = nil
+        end
+    end
+end
+
+local function shedAimbot(state)
+    shedAimbotActive = state
+    
+    if state then
+        if char.Name ~= "Shedletsky" then
+            Library:Notify('Wrong Character - Must be Shedletsky', 3)
+            Toggles.ShedAimbot:SetValue(false)
+            return
+        end
+        
+        local sword = char:FindFirstChild("Sword")
+        if not sword then
+            Library:Notify('Sword not found', 2)
+            Toggles.ShedAimbot:SetValue(false)
+            return
+        end
+        
+        shedAimbotLoop = sword.ChildAdded:Connect(function(child)
+            if not shedAimbotActive then return end
+            
+            for _, v in pairs(shedaimbotsounds) do
+                if child.Name == v then
+                    local killer = Workspace.Players:FindFirstChild("Killers")
+                    if killer then
+                        killer = killer:FindFirstChildOfClass("Model")
+                        if killer and killer:FindFirstChild("HumanoidRootPart") then
+                            local killerHRP = killer.HumanoidRootPart
+                            local playerHRP = char:FindFirstChild("HumanoidRootPart")
+                            
+                            if playerHRP then
+                                local num = 1
+                                local maxIterations = 100
+                                
+                                while num <= maxIterations and shedAimbotActive do
+                                    task.wait(0.01)
+                                    num = num + 1
+                                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, killerHRP.Position)
+                                    playerHRP.CFrame = CFrame.lookAt(playerHRP.Position, killerHRP.Position)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        if shedAimbotLoop then
+            shedAimbotLoop:Disconnect()
+            shedAimbotLoop = nil
+        end
+    end
+end
+
+local function guestAimbot(state)
+    guestAimbotActive = state
+    
+    if state then
+        if char.Name ~= "Guest1337" then
+            Library:Notify('Wrong Character - Must be Guest1337', 3)
+            Toggles.GuestAimbot:SetValue(false)
+            return
+        end
+        
+        guestAimbotLoop = char.HumanoidRootPart.ChildAdded:Connect(function(child)
+            if not guestAimbotActive then return end
+            
+            for _, v in pairs(guestsounds) do
+                if child.Name == v then
+                    local killer = Workspace.Players:FindFirstChild("Killers")
+                    if killer then
+                        killer = killer:FindFirstChildOfClass("Model")
+                        if killer and killer:FindFirstChild("HumanoidRootPart") then
+                            local killerHRP = killer.HumanoidRootPart
+                            local playerHRP = char:FindFirstChild("HumanoidRootPart")
+                            
+                            if playerHRP then
+                                local num = 1
+                                local maxIterations = 100
+                                
+                                while num <= maxIterations and guestAimbotActive do
+                                    task.wait(0.01)
+                                    num = num + 1
+                                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, killerHRP.Position)
+                                    playerHRP.CFrame = CFrame.lookAt(playerHRP.Position, killerHRP.Position)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        if guestAimbotLoop then
+            guestAimbotLoop:Disconnect()
+            guestAimbotLoop = nil
+        end
+    end
 end
 
 -- Emote Functions
@@ -173,85 +362,6 @@ local function activateHakariDance(state)
 
         for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
             if track.Animation.AnimationId == "rbxassetid://138019937280193" then
-                track:Stop()
-            end
-        end
-    end
-end
-
-local function activateMissTheQuiet(state)
-    local currentChar = char
-    local humanoid = currentChar:WaitForChild("Humanoid")
-    local rootPart = currentChar:WaitForChild("HumanoidRootPart")
-    
-    quietActive = state
-
-    if quietActive then
-        humanoid.PlatformStand = true
-        humanoid.JumpPower = 0
-
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-        bodyVelocity.Velocity = Vector3.zero
-        bodyVelocity.Parent = rootPart
-
-        local emoteScript = require(game:GetService("ReplicatedStorage").Assets.Emotes.MissTheQuiet)
-        emoteScript.Created({Character = currentChar})
-
-        local animation = Instance.new("Animation")
-        animation.AnimationId = "rbxassetid://100986631322204"
-        local animationTrack = humanoid:LoadAnimation(animation)
-        animationTrack:Play()
-
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://131936418953291"
-        sound.Parent = rootPart
-        sound.Volume = 0.5
-        sound.Looped = false
-        sound:Play()
-
-        local args = {
-            [1] = "PlayEmote",
-            [2] = "Animations",
-            [3] = "MissTheQuiet"
-        }
-        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-
-        animationTrack.Stopped:Connect(function()
-            humanoid.PlatformStand = false
-            if bodyVelocity and bodyVelocity.Parent then
-                bodyVelocity:Destroy()
-            end
-
-            local assetsToDestroy = {"EmoteHatAsset", "EmoteLighting", "PlayerEmoteHand"}
-            for _, assetName in ipairs(assetsToDestroy) do
-                local asset = currentChar:FindFirstChild(assetName)
-                if asset then asset:Destroy() end
-            end
-        end)
-    else
-        humanoid.PlatformStand = false
-        humanoid.JumpPower = 0
-
-        local assetsToDestroy = {"EmoteHatAsset", "EmoteLighting", "PlayerEmoteHand"}
-        for _, assetName in ipairs(assetsToDestroy) do
-            local asset = currentChar:FindFirstChild(assetName)
-            if asset then asset:Destroy() end
-        end
-
-        local bodyVelocity = rootPart:FindFirstChildOfClass("BodyVelocity")
-        if bodyVelocity then
-            bodyVelocity:Destroy()
-        end
-
-        local sound = rootPart:FindFirstChildOfClass("Sound")
-        if sound then
-            sound:Stop()
-            sound:Destroy()
-        end
-
-        for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
-            if track.Animation.AnimationId == "rbxassetid://100986631322204" then
                 track:Stop()
             end
         end
@@ -610,14 +720,46 @@ RunService.Stepped:Connect(function()
     end
 end)
 
+-- Improved Lighting with memory
 local originalLightingSettings = {}
+local lightingRestored = false
+
 local function SaveLightingSettings()
-    originalLightingSettings.Brightness = Lighting.Brightness
-    originalLightingSettings.ClockTime = Lighting.ClockTime
-    originalLightingSettings.FogEnd = Lighting.FogEnd
-    originalLightingSettings.GlobalShadows = Lighting.GlobalShadows
-    originalLightingSettings.Ambient = Lighting.Ambient
-    originalLightingSettings.OutdoorAmbient = Lighting.OutdoorAmbient
+    if not lightingRestored then
+        originalLightingSettings.Brightness = Lighting.Brightness
+        originalLightingSettings.ClockTime = Lighting.ClockTime
+        originalLightingSettings.FogEnd = Lighting.FogEnd
+        originalLightingSettings.FogStart = Lighting.FogStart
+        originalLightingSettings.GlobalShadows = Lighting.GlobalShadows
+        originalLightingSettings.Ambient = Lighting.Ambient
+        originalLightingSettings.OutdoorAmbient = Lighting.OutdoorAmbient
+        
+        originalLightingSettings.Effects = {}
+        for _, effect in ipairs(Lighting:GetChildren()) do
+            if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or 
+               effect:IsA("ColorCorrectionEffect") or effect:IsA("SunRaysEffect") or 
+               effect:IsA("DepthOfFieldEffect") or effect:IsA("Atmosphere") then
+                originalLightingSettings.Effects[effect] = effect.Enabled
+            end
+        end
+        lightingRestored = true
+    end
+end
+
+local function RestoreLightingSettings()
+    if lightingRestored then
+        for setting, value in pairs(originalLightingSettings) do
+            if setting ~= "Effects" then
+                Lighting[setting] = value
+            end
+        end
+        
+        for effect, enabled in pairs(originalLightingSettings.Effects) do
+            if effect and effect.Parent then
+                effect.Enabled = enabled
+            end
+        end
+    end
 end
 
 SaveLightingSettings()
@@ -638,6 +780,11 @@ RunService.RenderStepped:Connect(function()
                 effect.Enabled = false
             end
         end
+    end
+    
+    if Toggles.NoFog and Toggles.NoFog.Value then
+        Lighting.FogEnd = 100000
+        Lighting.FogStart = 0
     end
 end)
 
@@ -717,17 +864,6 @@ MainBox:AddButton({
     Tooltip = 'does a frontflip where ur looking'
 })
 
-MainBox:AddLabel('Frontflip Keybind'):AddKeyPicker('FrontflipKey', {
-    Default = 'None',
-    SyncToggleState = false,
-    Mode = 'Always',
-    Text = 'Frontflip',
-    NoUI = false,
-    Callback = function(Value)
-        PerformFrontflip()
-    end,
-})
-
 MainBox:AddSlider('FlipDistance', {
     Text = 'Flip Distance',
     Default = 35,
@@ -764,18 +900,8 @@ MainBox2:AddToggle('HakariDance', {
     Tooltip = 'activates hakari dance emote'
 })
 
-MainBox2:AddToggle('MissTheQuiet', {
-    Text = 'Miss The Quiet',
-    Default = false,
-    Tooltip = 'activates miss the quiet emote'
-})
-
 Toggles.HakariDance:OnChanged(function(value)
     activateHakariDance(value)
-end)
-
-Toggles.MissTheQuiet:OnChanged(function(value)
-    activateMissTheQuiet(value)
 end)
 
 local AutoBox = Tabs.Main:AddLeftGroupbox('Generator Automation')
@@ -820,6 +946,53 @@ Toggles.AutoGenerator:OnChanged(function(value)
     autoGenEnabled = value
     if value and not genLoopRunning then
         task.spawn(autoGeneratorLoop)
+    end
+end)
+
+local AimbotBox = Tabs.Main:AddRightGroupbox('Survivor Aimbots')
+
+AimbotBox:AddToggle('ChanceAimbot', {
+    Text = 'Chance Aimbot',
+    Default = false,
+    Tooltip = 'auto aims when using chance abilities (must be Chance)'
+})
+
+AimbotBox:AddToggle('ShedAimbot', {
+    Text = 'Shedletsky Aimbot',
+    Default = false,
+    Tooltip = 'auto aims when using shed sword (must be Shedletsky)'
+})
+
+AimbotBox:AddToggle('GuestAimbot', {
+    Text = 'Guest Aimbot',
+    Default = false,
+    Tooltip = 'auto aims when using guest abilities (must be Guest1337)'
+})
+
+AimbotBox:AddDivider()
+
+AimbotBox:AddToggle('PopupSolver', {
+    Text = 'Instant Popup Solver',
+    Default = false,
+    Tooltip = 'automatically solves 1x1x1x1 popups'
+})
+
+Toggles.ChanceAimbot:OnChanged(function(value)
+    chanceAimbot(value)
+end)
+
+Toggles.ShedAimbot:OnChanged(function(value)
+    shedAimbot(value)
+end)
+
+Toggles.GuestAimbot:OnChanged(function(value)
+    guestAimbot(value)
+end)
+
+Toggles.PopupSolver:OnChanged(function(value)
+    popupSolverActive = value
+    if value then
+        task.spawn(solvePopups)
     end
 end)
 
@@ -878,7 +1051,7 @@ Toggles.TPWalk:OnChanged(function(value)
     tpwalking = value
 end)
 
--- Visual Tab (merged ESP + Visual)
+-- Visual Tab
 local ESPPlayersBox = Tabs.Visual:AddLeftGroupbox('Player ESP')
 
 ESPPlayersBox:AddToggle('ESPKillers', {
@@ -956,7 +1129,31 @@ local VisualBox = Tabs.Visual:AddLeftGroupbox('Lighting')
 VisualBox:AddToggle('Fullbright', {
     Text = 'Fullbright',
     Default = false,
+    Tooltip = 'makes everything bright'
 })
+
+VisualBox:AddToggle('NoFog', {
+    Text = 'No Fog',
+    Default = false,
+    Tooltip = 'removes fog'
+})
+
+Toggles.Fullbright:OnChanged(function(value)
+    if not value then
+        RestoreLightingSettings()
+    end
+end)
+
+Toggles.NoFog:OnChanged(function(value)
+    if not value then
+        if originalLightingSettings.FogEnd then
+            Lighting.FogEnd = originalLightingSettings.FogEnd
+        end
+        if originalLightingSettings.FogStart then
+            Lighting.FogStart = originalLightingSettings.FogStart
+        end
+    end
+end)
 
 Toggles.ESPKillers:OnChanged(function()
     ScanAndUpdateESP()
@@ -1080,13 +1277,16 @@ Library:OnUnload(function()
     autoGenEnabled = false
     genLoopRunning = false
     hakariActive = false
-    quietActive = false
+    chanceAimbotActive = false
+    shedAimbotActive = false
+    guestAimbotActive = false
+    popupSolverActive = false
     
-    if originalLightingSettings then
-        for setting, value in pairs(originalLightingSettings) do
-            Lighting[setting] = value
-        end
-    end
+    if chanceAimbotLoop then chanceAimbotLoop:Disconnect() end
+    if shedAimbotLoop then shedAimbotLoop:Disconnect() end
+    if guestAimbotLoop then guestAimbotLoop:Disconnect() end
+    
+    RestoreLightingSettings()
     
     Library.Unloaded = true
 end)
