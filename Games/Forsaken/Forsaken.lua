@@ -16,6 +16,10 @@ local tpwalking = false
 local loopspeedEnabled = false
 local wsConnection = nil
 local wsCAConnection = nil
+local autoGenEnabled = false
+local genLoopRunning = false
+local hakariActive = false
+local quietActive = false
 
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     char = newChar
@@ -34,6 +38,227 @@ local ESPData = {
     trackedGens = {}
 }
 
+-- Auto Generator Functions
+local function instantSolveGenerator()
+    for _, v in pairs(Workspace.Map.Ingame.Map:GetChildren()) do
+        if v.Name == "Generator" then
+            local remotes = v:FindFirstChild("Remotes")
+            if remotes then
+                local re = remotes:FindFirstChild("RE")
+                if re then
+                    for i = 1, 4 do
+                        re:FireServer()
+                        task.wait(0.1)
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function solveOneGenerator()
+    for _, v in pairs(Workspace.Map.Ingame.Map:GetChildren()) do
+        if v.Name == "Generator" then
+            local remotes = v:FindFirstChild("Remotes")
+            if remotes then
+                local re = remotes:FindFirstChild("RE")
+                if re then
+                    re:FireServer()
+                    break
+                end
+            end
+        end
+    end
+end
+
+local function autoGeneratorLoop()
+    genLoopRunning = true
+    local debounce = {}
+    local delayTime = Options.GenDelay and Options.GenDelay.Value or 2.5
+    
+    while autoGenEnabled and genLoopRunning do
+        task.wait()
+        for _, v in pairs(Workspace.Map.Ingame.Map:GetChildren()) do
+            if v.Name == "Generator" and autoGenEnabled then
+                if not debounce[v] then
+                    debounce[v] = true
+                    
+                    local remotes = v:FindFirstChild("Remotes")
+                    if remotes then
+                        local re = remotes:FindFirstChild("RE")
+                        if re then
+                            re:FireServer()
+                        end
+                    end
+                    
+                    task.delay(delayTime, function() 
+                        debounce[v] = nil 
+                    end)
+                end
+            end
+        end
+    end
+    genLoopRunning = false
+end
+
+-- Emote Functions
+local function activateHakariDance(state)
+    local currentChar = char
+    local humanoid = currentChar:WaitForChild("Humanoid")
+    local rootPart = currentChar:WaitForChild("HumanoidRootPart")
+
+    hakariActive = state
+
+    if hakariActive then
+        humanoid.PlatformStand = true
+        humanoid.JumpPower = 0
+
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+        bodyVelocity.Velocity = Vector3.zero
+        bodyVelocity.Parent = rootPart
+
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://138019937280193"
+        local animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://87166578676888"
+        sound.Parent = rootPart
+        sound.Volume = 0.5
+        sound.Looped = true
+        sound:Play()
+
+        local effect = game.ReplicatedStorage.Assets.Emotes.HakariDance.HakariBeamEffect:Clone()
+        effect.Name = "PlayerEmoteVFX"
+        effect.CFrame = currentChar.PrimaryPart.CFrame * CFrame.new(0, -1, -0.3)
+        effect.WeldConstraint.Part0 = currentChar.PrimaryPart
+        effect.WeldConstraint.Part1 = effect
+        effect.Parent = currentChar
+        effect.CanCollide = false
+
+        local args = {
+            [1] = "PlayEmote",
+            [2] = "Animations",
+            [3] = "HakariDance"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+
+        animationTrack.Stopped:Connect(function()
+            humanoid.PlatformStand = false
+            if bodyVelocity and bodyVelocity.Parent then
+                bodyVelocity:Destroy()
+            end
+        end)
+    else
+        humanoid.PlatformStand = false
+        humanoid.JumpPower = 0
+
+        local bodyVelocity = rootPart:FindFirstChildOfClass("BodyVelocity")
+        if bodyVelocity then
+            bodyVelocity:Destroy()
+        end
+
+        local sound = rootPart:FindFirstChildOfClass("Sound")
+        if sound then
+            sound:Stop()
+            sound:Destroy()
+        end
+
+        local effect = currentChar:FindFirstChild("PlayerEmoteVFX")
+        if effect then
+            effect:Destroy()
+        end
+
+        for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+            if track.Animation.AnimationId == "rbxassetid://138019937280193" then
+                track:Stop()
+            end
+        end
+    end
+end
+
+local function activateMissTheQuiet(state)
+    local currentChar = char
+    local humanoid = currentChar:WaitForChild("Humanoid")
+    local rootPart = currentChar:WaitForChild("HumanoidRootPart")
+    
+    quietActive = state
+
+    if quietActive then
+        humanoid.PlatformStand = true
+        humanoid.JumpPower = 0
+
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
+        bodyVelocity.Velocity = Vector3.zero
+        bodyVelocity.Parent = rootPart
+
+        local emoteScript = require(game:GetService("ReplicatedStorage").Assets.Emotes.MissTheQuiet)
+        emoteScript.Created({Character = currentChar})
+
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://100986631322204"
+        local animationTrack = humanoid:LoadAnimation(animation)
+        animationTrack:Play()
+
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://131936418953291"
+        sound.Parent = rootPart
+        sound.Volume = 0.5
+        sound.Looped = false
+        sound:Play()
+
+        local args = {
+            [1] = "PlayEmote",
+            [2] = "Animations",
+            [3] = "MissTheQuiet"
+        }
+        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+
+        animationTrack.Stopped:Connect(function()
+            humanoid.PlatformStand = false
+            if bodyVelocity and bodyVelocity.Parent then
+                bodyVelocity:Destroy()
+            end
+
+            local assetsToDestroy = {"EmoteHatAsset", "EmoteLighting", "PlayerEmoteHand"}
+            for _, assetName in ipairs(assetsToDestroy) do
+                local asset = currentChar:FindFirstChild(assetName)
+                if asset then asset:Destroy() end
+            end
+        end)
+    else
+        humanoid.PlatformStand = false
+        humanoid.JumpPower = 0
+
+        local assetsToDestroy = {"EmoteHatAsset", "EmoteLighting", "PlayerEmoteHand"}
+        for _, assetName in ipairs(assetsToDestroy) do
+            local asset = currentChar:FindFirstChild(assetName)
+            if asset then asset:Destroy() end
+        end
+
+        local bodyVelocity = rootPart:FindFirstChildOfClass("BodyVelocity")
+        if bodyVelocity then
+            bodyVelocity:Destroy()
+        end
+
+        local sound = rootPart:FindFirstChildOfClass("Sound")
+        if sound then
+            sound:Stop()
+            sound:Destroy()
+        end
+
+        for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+            if track.Animation.AnimationId == "rbxassetid://100986631322204" then
+                track:Stop()
+            end
+        end
+    end
+end
+
+-- ESP Functions
 local function ClearESP(tbl)
     for _, v in pairs(tbl) do
         if typeof(v) == "Instance" then 
@@ -478,7 +703,6 @@ local Window = Library:CreateWindow({
 local Tabs = {
     Main = Window:AddTab('Main'),
     Movement = Window:AddTab('Movement'),
-    ESP = Window:AddTab('ESP'),
     Visual = Window:AddTab('Visual'),
     Settings = Window:AddTab('Settings'),
 }
@@ -491,6 +715,17 @@ MainBox:AddButton({
         PerformFrontflip()
     end,
     Tooltip = 'does a frontflip where ur looking'
+})
+
+MainBox:AddLabel('Frontflip Keybind'):AddKeyPicker('FrontflipKey', {
+    Default = 'None',
+    SyncToggleState = false,
+    Mode = 'Always',
+    Text = 'Frontflip',
+    NoUI = false,
+    Callback = function(Value)
+        PerformFrontflip()
+    end,
 })
 
 MainBox:AddSlider('FlipDistance', {
@@ -520,6 +755,73 @@ MainBox2:AddToggle('Invisibility', {
     Default = false,
     Tooltip = 'makes u invisible but esp can still see u'
 })
+
+MainBox2:AddDivider()
+
+MainBox2:AddToggle('HakariDance', {
+    Text = 'Hakari Dance',
+    Default = false,
+    Tooltip = 'activates hakari dance emote'
+})
+
+MainBox2:AddToggle('MissTheQuiet', {
+    Text = 'Miss The Quiet',
+    Default = false,
+    Tooltip = 'activates miss the quiet emote'
+})
+
+Toggles.HakariDance:OnChanged(function(value)
+    activateHakariDance(value)
+end)
+
+Toggles.MissTheQuiet:OnChanged(function(value)
+    activateMissTheQuiet(value)
+end)
+
+local AutoBox = Tabs.Main:AddLeftGroupbox('Generator Automation')
+
+AutoBox:AddButton({
+    Text = 'Instant Solve All Generators',
+    Func = function()
+        instantSolveGenerator()
+        Library:Notify('Solving all generators...', 2)
+    end,
+    Tooltip = 'instantly completes all generators (4 repairs each)'
+})
+
+AutoBox:AddButton({
+    Text = 'Solve One Generator',
+    Func = function()
+        solveOneGenerator()
+        Library:Notify('Solving one generator...', 2)
+    end,
+    Tooltip = 'repairs one generator once'
+})
+
+AutoBox:AddDivider()
+
+AutoBox:AddToggle('AutoGenerator', {
+    Text = 'Auto Generator Loop',
+    Default = false,
+    Tooltip = 'automatically repairs generators continuously'
+})
+
+AutoBox:AddSlider('GenDelay', {
+    Text = 'Generator Delay',
+    Default = 2.5,
+    Min = 0.5,
+    Max = 10,
+    Rounding = 1,
+    Compact = false,
+    Tooltip = 'delay between generator repairs (seconds)'
+})
+
+Toggles.AutoGenerator:OnChanged(function(value)
+    autoGenEnabled = value
+    if value and not genLoopRunning then
+        task.spawn(autoGeneratorLoop)
+    end
+end)
 
 local MovementBox = Tabs.Movement:AddLeftGroupbox('Walk Speed')
 
@@ -576,7 +878,8 @@ Toggles.TPWalk:OnChanged(function(value)
     tpwalking = value
 end)
 
-local ESPPlayersBox = Tabs.ESP:AddLeftGroupbox('Player ESP')
+-- Visual Tab (merged ESP + Visual)
+local ESPPlayersBox = Tabs.Visual:AddLeftGroupbox('Player ESP')
 
 ESPPlayersBox:AddToggle('ESPKillers', {
     Text = 'ESP Killers',
@@ -614,7 +917,7 @@ ESPPlayersBox:AddButton({
     Tooltip = 'click this if esp stops working'
 })
 
-local ESPObjectsBox = Tabs.ESP:AddRightGroupbox('Object ESP')
+local ESPObjectsBox = Tabs.Visual:AddRightGroupbox('Object ESP')
 
 ESPObjectsBox:AddToggle('ESPTools', {
     Text = 'ESP Tools',
@@ -774,6 +1077,10 @@ Library:OnUnload(function()
     if invisAnim then invisAnim:Stop() end
     StopLoopSpeed()
     tpwalking = false
+    autoGenEnabled = false
+    genLoopRunning = false
+    hakariActive = false
+    quietActive = false
     
     if originalLightingSettings then
         for setting, value in pairs(originalLightingSettings) do
@@ -786,4 +1093,4 @@ end)
 
 ScanAndUpdateESP()
 
-Library:Notify('BEARWARE loaded', 3)
+Library:Notify('BEARWARE loaded successfully!', 3)
