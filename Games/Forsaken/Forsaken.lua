@@ -1156,7 +1156,7 @@ MiscBox:AddLabel('???'):AddKeyPicker('TextReplacerKey', {
 MiscBox:AddToggle('TextReplacer', {
     Text = '???',
     Default = false,
-    Tooltip = 'replaces "Doe" with "Toe" in all PlayerGui text'
+    Tooltip = 'john?'
 })
 
 Toggles.TextReplacer:OnChanged(function(value)
