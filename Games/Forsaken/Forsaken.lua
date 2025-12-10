@@ -27,6 +27,11 @@ local chanceAimbotLoop = nil
 local shedAimbotLoop = nil
 local guestAimbotLoop = nil
 local popupSolverActive = false
+local animSpeedEnabled = false
+local animSpeedConnection = nil
+local globalAnimSpeed = 1
+local textReplacerActive = false
+local textReplacerConnection = nil
 
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     char = newChar
@@ -59,6 +64,73 @@ local shedaimbotsounds = {
 local guestsounds = {
     "rbxassetid://609342351"
 }
+
+-- Text Replacer Feature
+local function textReplacerLoop()
+    textReplacerActive = true
+    
+    textReplacerConnection = RunService.RenderStepped:Connect(function()
+        if not textReplacerActive then return end
+        
+        pcall(function()
+            local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+            if playerGui then
+                for _, gui in ipairs(playerGui:GetDescendants()) do
+                    if gui:IsA("TextLabel") or gui:IsA("TextButton") or gui:IsA("TextBox") then
+                        if gui.Text and string.find(gui.Text, "Doe") then
+                            gui.Text = string.gsub(gui.Text, "Doe", "Toe")
+                        end
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+local function stopTextReplacer()
+    textReplacerActive = false
+    if textReplacerConnection then
+        textReplacerConnection:Disconnect()
+        textReplacerConnection = nil
+    end
+end
+
+-- Animation Speed Control
+local function setupAnimationSpeed()
+    local currentChar = char
+    local humanoid = currentChar:FindFirstChildOfClass("Humanoid")
+    
+    if not humanoid then return end
+    
+    local function adjustAnimSpeed()
+        if animSpeedEnabled and humanoid then
+            local speed = Options.AnimSpeed and Options.AnimSpeed.Value or 1
+            for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+                track:AdjustSpeed(speed)
+            end
+        end
+    end
+    
+    animSpeedConnection = RunService.RenderStepped:Connect(function()
+        if animSpeedEnabled then
+            adjustAnimSpeed()
+        end
+    end)
+end
+
+local function stopAnimationSpeed()
+    if animSpeedConnection then
+        animSpeedConnection:Disconnect()
+        animSpeedConnection = nil
+    end
+    
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+            track:AdjustSpeed(1)
+        end
+    end
+end
 
 -- Auto Generator Functions
 local function instantSolveGenerator()
@@ -99,26 +171,41 @@ local function autoGeneratorLoop()
     
     while autoGenEnabled and genLoopRunning do
         local delayTime = Options.GenDelay and Options.GenDelay.Value or 2.5
-        task.wait()
-        for _, v in pairs(Workspace.Map.Ingame.Map:GetChildren()) do
-            if v.Name == "Generator" and autoGenEnabled then
-                if not debounce[v] then
-                    debounce[v] = true
-                    
-                    local remotes = v:FindFirstChild("Remotes")
-                    if remotes then
-                        local re = remotes:FindFirstChild("RE")
-                        if re then
-                            re:FireServer()
+        
+        pcall(function()
+            local mapPath = Workspace:FindFirstChild("Map")
+            if mapPath then
+                local ingamePath = mapPath:FindFirstChild("Ingame")
+                if ingamePath then
+                    local mapFolder = ingamePath:FindFirstChild("Map")
+                    if mapFolder then
+                        for _, v in pairs(mapFolder:GetChildren()) do
+                            if v.Name == "Generator" and autoGenEnabled and genLoopRunning then
+                                if not debounce[v] then
+                                    debounce[v] = true
+                                    
+                                    local remotes = v:FindFirstChild("Remotes")
+                                    if remotes then
+                                        local re = remotes:FindFirstChild("RE")
+                                        if re then
+                                            pcall(function()
+                                                re:FireServer()
+                                            end)
+                                        end
+                                    end
+                                    
+                                    task.delay(delayTime, function() 
+                                        debounce[v] = nil 
+                                    end)
+                                end
+                            end
                         end
                     end
-                    
-                    task.delay(delayTime, function() 
-                        debounce[v] = nil 
-                    end)
                 end
             end
-        end
+        end)
+        
+        task.wait(0.1)
     end
     genLoopRunning = false
 end
@@ -368,6 +455,47 @@ local function activateHakariDance(state)
     end
 end
 
+local function forceStopHakariDance()
+    hakariActive = false
+    local currentChar = char
+    local humanoid = currentChar:FindFirstChildOfClass("Humanoid")
+    local rootPart = currentChar:FindFirstChild("HumanoidRootPart")
+    
+    if humanoid then
+        humanoid.PlatformStand = false
+        humanoid.JumpPower = 0
+        
+        for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+    end
+    
+    if rootPart then
+        local bodyVelocity = rootPart:FindFirstChildOfClass("BodyVelocity")
+        if bodyVelocity then
+            bodyVelocity:Destroy()
+        end
+        
+        for _, sound in ipairs(rootPart:GetChildren()) do
+            if sound:IsA("Sound") then
+                sound:Stop()
+                sound:Destroy()
+            end
+        end
+    end
+    
+    local effect = currentChar:FindFirstChild("PlayerEmoteVFX")
+    if effect then
+        effect:Destroy()
+    end
+    
+    if Toggles.HakariDance then
+        Toggles.HakariDance:SetValue(false)
+    end
+    
+    Library:Notify('Hakari Dance force stopped', 2)
+end
+
 -- ESP Functions
 local function ClearESP(tbl)
     for _, v in pairs(tbl) do
@@ -397,7 +525,7 @@ local function CreatePlayerESP(player)
         Box.Size = HRP.Size + Vector3.new(0.5, 0.5, 0.5)
         Box.AlwaysOnTop = true
         Box.ZIndex = 10
-        Box.Transparency = 0.7
+        Box.Transparency = 0.5
 
         local BillboardGui = Instance.new("BillboardGui")
         BillboardGui.Parent = HRP
@@ -410,8 +538,9 @@ local function CreatePlayerESP(player)
         TextLabel.Size = UDim2.new(1, 0, 1, 0)
         TextLabel.BackgroundTransparency = 1
         TextLabel.TextScaled = true
-        TextLabel.Font = Enum.Font.SourceSansBold
-        TextLabel.TextStrokeTransparency = 0
+        TextLabel.Font = Enum.Font.GothamBold
+        TextLabel.TextStrokeTransparency = 0.3
+        TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
         TextLabel.TextSize = 14
 
         local connection
@@ -476,7 +605,7 @@ local function CreateToolESP(tool)
     Box.Size = ItemRoot.Size + Vector3.new(0.5, 0.5, 0.5)
     Box.AlwaysOnTop = true
     Box.ZIndex = 10
-    Box.Transparency = 0.6
+    Box.Transparency = 0.4
 
     local BillboardGui = Instance.new("BillboardGui")
     BillboardGui.Parent = ItemRoot
@@ -489,8 +618,9 @@ local function CreateToolESP(tool)
     TextLabel.Size = UDim2.new(1, 0, 1, 0)
     TextLabel.BackgroundTransparency = 1
     TextLabel.TextScaled = true
-    TextLabel.Font = Enum.Font.SourceSansBold
-    TextLabel.TextStrokeTransparency = 0
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.TextStrokeTransparency = 0.3
+    TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
     TextLabel.TextSize = 14
     TextLabel.Text = tool.Name
 
@@ -536,7 +666,7 @@ local function CreateGeneratorESP(generator)
     Box.Adornee = genPart
     Box.Size = genPart.Size
     Box.AlwaysOnTop = true
-    Box.Transparency = 0.5
+    Box.Transparency = 0.3
     Box.ZIndex = 10
 
     local BillboardGui = Instance.new("BillboardGui")
@@ -550,8 +680,9 @@ local function CreateGeneratorESP(generator)
     TextLabel.Size = UDim2.new(1, 0, 1, 0)
     TextLabel.BackgroundTransparency = 1
     TextLabel.TextScaled = true
-    TextLabel.Font = Enum.Font.SourceSansBold
-    TextLabel.TextStrokeTransparency = 0
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.TextStrokeTransparency = 0.3
+    TextLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
     TextLabel.TextSize = 14
 
     local connection
@@ -573,7 +704,13 @@ local function CreateGeneratorESP(generator)
         Box.Visible = true
         TextLabel.Visible = true
 
-        local progress = generator:FindFirstChild("Progress") and generator.Progress.Value or 0
+        local progressObj = generator:FindFirstChild("Progress")
+        local progress = 0
+        
+        if progressObj and (progressObj:IsA("IntValue") or progressObj:IsA("NumberValue")) then
+            progress = progressObj.Value or 0
+        end
+        
         local progressText = ""
         
         if progress == 0 then
@@ -590,7 +727,7 @@ local function CreateGeneratorESP(generator)
             progressText = math.floor(progress) .. "%"
         end
 
-        TextLabel.Text = "Generator\n" .. progressText
+        TextLabel.Text = progressText
         Box.Color3 = Options.GeneratorColor.Value
         TextLabel.TextColor3 = Options.GeneratorColor.Value
     end)
@@ -669,6 +806,73 @@ local function PerformFrontflip()
             local y = 4 * (t - t ^ 2) * height
             local pos = cf.Position + direction * (distance * t) + up * y
             local rotation = CFrame.Angles(-math.rad(360 * t), 0, 0)
+            hrp.CFrame = CFrame.new(pos) * cf.Rotation * rotation
+
+            local waitTime = (duration / steps) * i - (tick() - startTime)
+            if waitTime > 0 then task.wait(waitTime) end
+        end
+
+        hrp.CFrame = CFrame.new(cf.Position + direction * distance) * cf.Rotation
+
+        for _, state in ipairs({
+            Enum.HumanoidStateType.FallingDown,
+            Enum.HumanoidStateType.Freefall,
+            Enum.HumanoidStateType.Running,
+            Enum.HumanoidStateType.Seated,
+            Enum.HumanoidStateType.Climbing
+        }) do
+            hum:SetStateEnabled(state, true)
+        end
+        hum:ChangeState(Enum.HumanoidStateType.Running)
+        
+        if char:FindFirstChild("Animate") then
+            char.Animate.Disabled = false
+        end
+    end)
+end
+
+local function PerformBackflip()
+    local hum = char:FindFirstChild("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not (hum and hrp) then return end
+
+    if char:FindFirstChild("Animate") then
+        char.Animate.Disabled = true
+    end
+
+    local animator = hum:FindFirstChildOfClass("Animator")
+    if animator then
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+    end
+
+    for _, state in ipairs({
+        Enum.HumanoidStateType.FallingDown,
+        Enum.HumanoidStateType.Freefall,
+        Enum.HumanoidStateType.Running,
+        Enum.HumanoidStateType.Seated,
+        Enum.HumanoidStateType.Climbing
+    }) do
+        hum:SetStateEnabled(state, false)
+    end
+    hum:ChangeState(Enum.HumanoidStateType.Physics)
+
+    local duration = 0.45
+    local steps = 120
+    local cf = hrp.CFrame
+    local direction = -cf.LookVector
+    local up = Vector3.yAxis
+    local distance = Options.FlipDistance and Options.FlipDistance.Value or 35
+    local height = Options.FlipHeight and Options.FlipHeight.Value or 10
+
+    task.spawn(function()
+        local startTime = tick()
+        for i = 1, steps do
+            local t = i / steps
+            local y = 4 * (t - t ^ 2) * height
+            local pos = cf.Position + direction * (distance * t) + up * y
+            local rotation = CFrame.Angles(math.rad(360 * t), 0, 0)
             hrp.CFrame = CFrame.new(pos) * cf.Rotation * rotation
 
             local waitTime = (duration / steps) * i - (tick() - startTime)
@@ -886,12 +1090,38 @@ local Tabs = {
 
 local MainBox = Tabs.Main:AddLeftGroupbox('Flip Controls')
 
+MainBox:AddLabel('Frontflip'):AddKeyPicker('FrontflipKey', {
+    Default = 'None',
+    Text = 'Frontflip',
+    NoUI = false,
+    Callback = function()
+        PerformFrontflip()
+    end
+})
+
 MainBox:AddButton({
     Text = 'Perform Frontflip',
     Func = function()
         PerformFrontflip()
     end,
     Tooltip = 'does a frontflip where ur looking'
+})
+
+MainBox:AddLabel('Backflip'):AddKeyPicker('BackflipKey', {
+    Default = 'None',
+    Text = 'Backflip',
+    NoUI = false,
+    Callback = function()
+        PerformBackflip()
+    end
+})
+
+MainBox:AddButton({
+    Text = 'Perform Backflip',
+    Func = function()
+        PerformBackflip()
+    end,
+    Tooltip = 'does a backflip away from where ur looking'
 })
 
 MainBox:AddSlider('FlipDistance', {
@@ -914,7 +1144,37 @@ MainBox:AddSlider('FlipHeight', {
     Tooltip = 'height of the jump'
 })
 
+local MiscBox = Tabs.Main:AddLeftGroupbox('Misc')
+
+MiscBox:AddLabel('???'):AddKeyPicker('TextReplacerKey', {
+    Default = 'None',
+    Text = '???',
+    Mode = 'Toggle',
+    NoUI = false
+})
+
+MiscBox:AddToggle('TextReplacer', {
+    Text = '???',
+    Default = false,
+    Tooltip = 'replaces "Doe" with "Toe" in all PlayerGui text'
+})
+
+Toggles.TextReplacer:OnChanged(function(value)
+    if value then
+        textReplacerLoop()
+    else
+        stopTextReplacer()
+    end
+end)
+
 local MainBox2 = Tabs.Main:AddRightGroupbox('Character')
+
+MainBox2:AddLabel('Invisibility'):AddKeyPicker('InvisibilityKey', {
+    Default = 'None',
+    Text = 'Invisibility',
+    Mode = 'Toggle',
+    NoUI = false
+})
 
 MainBox2:AddToggle('Invisibility', {
     Text = 'Invisibility',
@@ -924,37 +1184,85 @@ MainBox2:AddToggle('Invisibility', {
 
 MainBox2:AddDivider()
 
+MainBox2:AddLabel('Hakari Dance'):AddKeyPicker('HakariDanceKey', {
+    Default = 'None',
+    Text = 'Hakari Dance',
+    Mode = 'Toggle',
+    NoUI = false
+})
+
 MainBox2:AddToggle('HakariDance', {
     Text = 'Hakari Dance',
     Default = false,
     Tooltip = 'activates hakari dance emote'
 })
 
+MainBox2:AddButton({
+    Text = 'Force Stop Hakari Dance',
+    Func = function()
+        forceStopHakariDance()
+    end,
+    Tooltip = 'force stops hakari dance if glitched'
+})
+
+MainBox2:AddDivider()
+
+MainBox2:AddLabel('Animation Speed'):AddKeyPicker('AnimSpeedKey', {
+    Default = 'None',
+    Text = 'Animation Speed',
+    Mode = 'Toggle',
+    NoUI = false
+})
+
+MainBox2:AddToggle('AnimSpeed', {
+    Text = 'Animation Speed Control',
+    Default = false,
+    Tooltip = 'control the speed of all your animations'
+})
+
+MainBox2:AddSlider('AnimSpeed', {
+    Text = 'Animation Speed',
+    Default = 1,
+    Min = 0.5,
+    Max = 25,
+    Rounding = 1,
+    Compact = false,
+    Tooltip = 'speed multiplier for all animations (0.5x - 25x)'
+})
+
 Toggles.HakariDance:OnChanged(function(value)
     activateHakariDance(value)
 end)
 
+Toggles.AnimSpeed:OnChanged(function(value)
+    animSpeedEnabled = value
+    if value then
+        setupAnimationSpeed()
+    else
+        stopAnimationSpeed()
+    end
+end)
+
+Options.AnimSpeed:OnChanged(function()
+    if animSpeedEnabled then
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local speed = Options.AnimSpeed.Value
+            for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+                track:AdjustSpeed(speed)
+            end
+        end
+    end
+end)
+
 local AutoBox = Tabs.Main:AddLeftGroupbox('Generator Automation')
 
-AutoBox:AddButton({
-    Text = 'Instant Solve All Generators',
-    Func = function()
-        instantSolveGenerator()
-        Library:Notify('Solving all generators...', 2)
-    end,
-    Tooltip = 'instantly completes all generators (4 repairs each)'
+AutoBox:AddLabel('Auto Generator'):AddKeyPicker('AutoGeneratorKey', {
+    Default = 'None',
+    Text = 'Auto Generator',
+    Mode = 'Toggle',
+    NoUI = false
 })
-
-AutoBox:AddButton({
-    Text = 'Solve One Generator',
-    Func = function()
-        solveOneGenerator()
-        Library:Notify('Solving one generator...', 2)
-    end,
-    Tooltip = 'repairs one generator once'
-})
-
-AutoBox:AddDivider()
 
 AutoBox:AddToggle('AutoGenerator', {
     Text = 'Auto Generator Loop',
@@ -971,6 +1279,8 @@ AutoBox:AddSlider('GenDelay', {
     Compact = false,
     Tooltip = 'delay between generator repairs (seconds)'
 })
+
+AutoBox:AddLabel('Making it under 2.5 seconds might result in a kick!', true)
 
 Toggles.AutoGenerator:OnChanged(function(value)
     autoGenEnabled = value
@@ -1084,6 +1394,13 @@ end)
 -- Visual Tab
 local ESPPlayersBox = Tabs.Visual:AddLeftGroupbox('Player ESP')
 
+ESPPlayersBox:AddLabel('ESP Killers'):AddKeyPicker('ESPKillersKey', {
+    Default = 'None',
+    Text = 'ESP Killers',
+    Mode = 'Toggle',
+    NoUI = false
+})
+
 ESPPlayersBox:AddToggle('ESPKillers', {
     Text = 'ESP Killers',
     Default = false,
@@ -1092,6 +1409,13 @@ ESPPlayersBox:AddToggle('ESPKillers', {
 ESPPlayersBox:AddLabel('Killer Color'):AddColorPicker('KillerColor', {
     Default = Color3.fromRGB(255, 0, 0),
     Title = 'Killer ESP Color',
+})
+
+ESPPlayersBox:AddLabel('ESP Survivors'):AddKeyPicker('ESPSurvivorsKey', {
+    Default = 'None',
+    Text = 'ESP Survivors',
+    Mode = 'Toggle',
+    NoUI = false
 })
 
 ESPPlayersBox:AddToggle('ESPSurvivors', {
@@ -1122,6 +1446,13 @@ ESPPlayersBox:AddButton({
 
 local ESPObjectsBox = Tabs.Visual:AddRightGroupbox('Object ESP')
 
+ESPObjectsBox:AddLabel('ESP Tools'):AddKeyPicker('ESPToolsKey', {
+    Default = 'None',
+    Text = 'ESP Tools',
+    Mode = 'Toggle',
+    NoUI = false
+})
+
 ESPObjectsBox:AddToggle('ESPTools', {
     Text = 'ESP Tools',
     Default = false,
@@ -1131,6 +1462,13 @@ ESPObjectsBox:AddToggle('ESPTools', {
 ESPObjectsBox:AddLabel('Tool Color'):AddColorPicker('ToolColor', {
     Default = Color3.fromRGB(255, 255, 0),
     Title = 'Tool ESP Color',
+})
+
+ESPObjectsBox:AddLabel('ESP Generators'):AddKeyPicker('ESPGeneratorsKey', {
+    Default = 'None',
+    Text = 'ESP Generators',
+    Mode = 'Toggle',
+    NoUI = false
 })
 
 ESPObjectsBox:AddToggle('ESPGenerators', {
@@ -1303,6 +1641,8 @@ Library:OnUnload(function()
     ClearESP(ESPData.connections)
     if invisAnim then invisAnim:Stop() end
     StopLoopSpeed()
+    stopAnimationSpeed()
+    stopTextReplacer()
     tpwalking = false
     autoGenEnabled = false
     genLoopRunning = false
@@ -1311,6 +1651,8 @@ Library:OnUnload(function()
     shedAimbotActive = false
     guestAimbotActive = false
     popupSolverActive = false
+    animSpeedEnabled = false
+    textReplacerActive = false
     
     if chanceAimbotLoop then chanceAimbotLoop:Disconnect() end
     if shedAimbotLoop then shedAimbotLoop:Disconnect() end
