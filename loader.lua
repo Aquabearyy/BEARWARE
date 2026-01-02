@@ -6,40 +6,15 @@ if not getgenv().BearHubLoaded then
 end
 
 local supportedGames = {
-    -- Slap Battles
-    [6403373529] = {
-        name = "Slap Battles",
+    -- Cubination
+    [91731139776520] = {
+        name = "Cubination",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slapbattles.lua"
     },
-    
-    [9431156611] = {
-        name = "Slap Royale",
+    -- Forsaken
+    [18687417158] = {
+        name = "Forsaken",
         url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slaproyale.lua"
-    },
-    -- Rivals
-    [17625359962] = {
-        name = "Rivals",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
-    },
-    [71874690745115] = {
-        name = "Rivals FFA",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Rivals/rivals.lua"
-    },
-    [621129760] = {
-        name = "KAT",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/KAT/kat.lua"
-    },
-    [286090429] = {
-        name = "Arsenal",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Arsenal/arsenal.lua"
-    },
-    [537413528] = {
-        name = "Build A Boat For Treasure",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Build-A-Boat-For-Treasure/babft.lua"
-    },
-    [16732694052] = {
-        name = "Fisch",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Fisch/fisch.lua"
     }
 }
 
