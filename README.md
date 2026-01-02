@@ -1,9 +1,10 @@
 # BEARWARE
 
-### Simple and powerful hub for popular Roblox games.
+### Simple and powerful hub for Roblox games.
 
 # Supported Games
-- going on a full rework right now.
+- Cubination
+- Forsaken
 
 # Usage
 ```lua
@@ -17,40 +18,20 @@ print("BEARWARE Is currently unavaliable because of the rework")
 
 ### PC EXECUTORS
 
-- **Bear-V3 - 🟢**
-- **Solara - 🟡**
-- **Xeno - 🟡**
-- **Cloudy - 🟡**
-- **AWP.GG - 🟡**
-- **Synapse Z - 🟡**
-- **Swift - 🟡**
-- **Wave - 🟡**
-- **Seliware - 🟡**
-- **JJSploit - 🟡**
-- **Zorara - 🟡**
-- **Nezur - 🟡**
-- **Velocity - 🟡**
-- **Ronix - 🟡**
-- **Celery - 🟡**
-- **Argon - 🟡**
-- **Atlantis - 🟡**
-- **Lx63 - 🟡**
-- **SubZero / Fluxus - 🟡**
+- **Bear - 🟢**
+- **Potassium - 🟢**
 
 ## MAC EXECUTORS
 
-- **Macsploit - 🟡**
+- **Macsploit - 🟢**
 
 ## ANDROID EXECUTORS
 
-- **Delta - 🟡**
-- **Codex - 🟡**
-- **Fluxus / SubZero - 🟡**
-- **KRNL - 🟡**
+- **Delta - 🟢**
 
 ## IOS EXECUTORS
 
-- **Delta - 🟡**
+- **Delta - 🟢**
 
 # SUPPORT
 
