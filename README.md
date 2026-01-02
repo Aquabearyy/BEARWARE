@@ -8,7 +8,7 @@
 
 # Usage
 ```lua
-print("BEARWARE Is currently unavaliable because of the rework")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Aquabearyy/BEARWARE/main/loader.lua"))()
 ```
 
 # Supported Executors
