@@ -32,7 +32,7 @@ end
 
 local function main()
     if getgenv().BearHubLoaded then
-        notify("Already Loaded", "Bear Hub is already running!", 3)
+        notify("Already Loaded", "BEARWARE is already running!", 3)
         return false
     end
 
@@ -49,7 +49,7 @@ local function main()
             notify("Script Loaded", string.format("Successfully loaded %s script!", gameInfo.name), 3)
         else
             notify("Game Not Supported", "Loading universal script...", 3)
-            local universalScript = fetchScript("https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Universal/universal.lua")
+            local universalScript = fetchScript("https://raw.githubusercontent.com/Aquabearyy/BEARWARE/main/Games/Universal/universal.lua")
             loadstring(universalScript)()
             notify("Script Loaded", "Universal script loaded successfully!", 3)
         end
