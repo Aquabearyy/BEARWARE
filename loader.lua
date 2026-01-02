@@ -1,20 +1,20 @@
 local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 
-if not getgenv().BearHubLoaded then
-    getgenv().BearHubLoaded = false
+if not getgenv().BEARWARELoaded then
+    getgenv().BEARWARELoaded = false
 end
 
 local supportedGames = {
     -- Cubination
     [91731139776520] = {
         name = "Cubination",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slapbattles.lua"
+        url = "https://raw.githubusercontent.com/Aquabearyy/BEARWARE/main/Games/Cubination/Cubination.lua"
     },
     -- Forsaken
     [18687417158] = {
         name = "Forsaken",
-        url = "https://raw.githubusercontent.com/sxlent404/Bear-Hub/main/Games/Slap%20Battles/slaproyale.lua"
+        url = "https://raw.githubusercontent.com/Aquabearyy/BEARWARE/main/Games/Forsaken/Forsaken.lua"
     }
 }
 
@@ -31,7 +31,7 @@ local function fetchScript(url)
 end
 
 local function main()
-    if getgenv().BearHubLoaded then
+    if getgenv().BEARWARELoaded then
         notify("Already Loaded", "BEARWARE is already running!", 3)
         return false
     end
@@ -61,7 +61,7 @@ local function main()
         return false
     end
     
-    getgenv().BearHubLoaded = true
+    getgenv().BEARWARELoaded = true
     return true
 end
 
